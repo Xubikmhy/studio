@@ -2,9 +2,9 @@
 "use client";
 import { useState }
 from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, CalendarDays, Users, Loader2 } from "lucide-react";
+import { Download, FileText, CalendarDays, Users, Loader2, CheckCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { TEAMS } from "@/lib/constants";
@@ -42,13 +42,12 @@ export default function AdminReportsPage() {
         period: [
           { label: "Last 7 Days", value: "last7" },
           { label: "Last 30 Days", value: "last30" },
-          // { label: "Custom Range", value: "custom" }, // Custom range not implemented
         ],
       },
       categoryLabel: "Task Completion Report"
     },
     team: {
-      type: `Team Productivity - ${TEAMS[0]}`, // Default to first team or "All Teams"
+      type: `Team Productivity - ${TEAMS[0]}`,
       params: { team: TEAMS[0] || "all" },
       paramOptions: {
         team: [
@@ -65,13 +64,11 @@ export default function AdminReportsPage() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [currentGeneratingKey, setCurrentGeneratingKey] = useState<string | null>(null);
 
-
   const handleParamChange = (reportKey: string, paramKey: string, value: string) => {
     setReportConfigs(prev => {
       const newParams = { ...prev[reportKey].params, [paramKey]: value };
       let newType = prev[reportKey].type;
 
-      // Update user-friendly type based on selection
       if (reportKey === 'attendance' && paramKey === 'period') {
         newType = prev[reportKey].paramOptions?.period?.find(opt => opt.value === value)?.label || prev[reportKey].type;
       } else if (reportKey === 'task' && paramKey === 'period') {
@@ -85,10 +82,23 @@ export default function AdminReportsPage() {
         [reportKey]: {
           ...prev[reportKey],
           params: newParams,
-          type: newType, // Update the display type
+          type: newType,
         }
       };
     });
+    setGeneratedReportData(null); // Clear previous report data when params change
+  };
+
+  const downloadCsvFile = (fileName: string, csvContent: string) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    const safeFileName = fileName.replace(/[^\w\s.-]/gi, '').replace(/\s+/g, '_') || 'report.csv';
+    link.download = safeFileName.toLowerCase().endsWith('.csv') ? safeFileName : `${safeFileName}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
   };
 
   const triggerReportGeneration = async (reportKey: string) => {
@@ -104,41 +114,28 @@ export default function AdminReportsPage() {
 
     try {
       const input: GenerateReportInput = {
-        reportType: `${config.categoryLabel} (${config.type})`, // More specific type for AI
+        reportType: `${config.categoryLabel} (${config.type})`,
         params: config.params,
       };
       const result = await generateReport(input);
       setGeneratedReportData(result);
-      toast({ title: "Report Generated", description: "Simulated report content is now available below." });
+      downloadCsvFile(result.fileName, result.csvContent);
+      toast({ title: "Report Generated", description: `Downloading "${result.fileName}"...` });
     } catch (error) {
       console.error("Failed to generate report:", error);
+      setGeneratedReportData(null);
       toast({ title: "Error Generating Report", description: (error as Error).message || "An unknown error occurred.", variant: "destructive" });
     } finally {
       setIsGeneratingReport(false);
       setCurrentGeneratingKey(null);
     }
   };
-  
-  const handleDownloadReport = () => {
-    if (!generatedReportData) return;
-    const blob = new Blob([`Title: ${generatedReportData.title}\n\n${generatedReportData.content}`], { type: 'text/plain;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    const fileName = `${generatedReportData.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_') || 'report'}.txt`;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
-    toast({ title: "Report Download Started", description: `Downloading ${fileName}` });
-  };
-
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Generate Reports</h1>
-        <p className="text-muted-foreground">Access detailed reports for attendance, tasks, and team productivity.</p>
+        <p className="text-muted-foreground">Access detailed reports for attendance, tasks, and team productivity. Downloads as CSV.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -242,28 +239,21 @@ export default function AdminReportsPage() {
         </Card>
       </div>
 
-      {isGeneratingReport && !generatedReportData && (
+      {isGeneratingReport && (
         <div className="mt-6 flex items-center justify-center space-x-2 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-lg">Generating your report, please wait...</p>
         </div>
       )}
 
-      {generatedReportData && (
-        <Card className="mt-8 shadow-lg">
-          <CardHeader>
-            <CardTitle>{generatedReportData.title}</CardTitle>
-            <CardDescription>Generated on: {new Date().toLocaleString()}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-md">{generatedReportData.content}</pre>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={handleDownloadReport}>
-              <Download className="mr-2 h-4 w-4" /> Download Report (.txt)
-            </Button>
-          </CardFooter>
-        </Card>
+      {!isGeneratingReport && generatedReportData && (
+        <Alert variant="default" className="mt-8 bg-green-50 border-green-300 dark:bg-green-900/30 dark:border-green-700">
+          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <AlertTitle className="text-green-700 dark:text-green-300">Report Ready</AlertTitle>
+          <AlertDescription className="text-green-600 dark:text-green-400">
+            The report &quot;{generatedReportData.fileName}&quot; has been generated and your download should have started.
+          </AlertDescription>
+        </Alert>
       )}
       
        {!isGeneratingReport && !generatedReportData && (
@@ -271,7 +261,7 @@ export default function AdminReportsPage() {
           <FileText className="h-4 w-4" />
           <AlertTitle>No Report Generated Yet</AlertTitle>
           <AlertDescription>
-            Select report options above and click &quot;Generate Report&quot; to see the simulated content here.
+            Select report options above and click &quot;Generate Report&quot; to download the simulated CSV content.
           </AlertDescription>
         </Alert>
       )}
