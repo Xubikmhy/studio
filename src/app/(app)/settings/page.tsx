@@ -1,7 +1,7 @@
-
 // @ts-nocheck
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -19,16 +19,43 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  // In a real app, these would be managed states
-  const handleThemeChange = (theme: string) => {
+  const [currentTheme, setCurrentTheme] = useState<string>("system");
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const storedTheme = localStorage.getItem("theme") || "system";
+    setCurrentTheme(storedTheme);
+    // Initial theme application is handled by RootLayout
+  }, []);
+
+  const handleThemeChange = (newTheme: string) => {
+    setCurrentTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else if (newTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else { // system
+      document.documentElement.classList.remove('dark'); // remove explicit theme
+      // Re-apply system preference if it's dark
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      }
+    }
+
     toast({
         title: "Theme Changed",
-        description: `Theme set to ${theme}. (Actual theme switching not implemented yet).`
+        description: `Theme set to ${newTheme === 'system' ? 'System Preference' : newTheme.charAt(0).toUpperCase() + newTheme.slice(1)}.`,
     });
-    // Implement theme switching logic here:
-    // e.g., document.documentElement.classList.remove('light', 'dark');
-    // if (theme === 'system') { /* check system preference */ } else { document.documentElement.classList.add(theme); }
   };
+  
+  if (!isMounted) {
+    // Render nothing or a placeholder until the theme is determined client-side
+    // This helps prevent hydration mismatches for the Select component's default value
+    return null; 
+  }
 
   return (
     <div className="space-y-6">
@@ -48,7 +75,7 @@ export default function SettingsPage() {
               <Label htmlFor="theme-select" className="text-base font-medium">Theme</Label>
               <p className="text-sm text-muted-foreground">Select your preferred color scheme.</p>
             </div>
-            <Select defaultValue="system" onValueChange={handleThemeChange}>
+            <Select value={currentTheme} onValueChange={handleThemeChange}>
               <SelectTrigger id="theme-select" className="w-[180px]">
                 <SelectValue placeholder="Select theme" />
               </SelectTrigger>
@@ -65,7 +92,6 @@ export default function SettingsPage() {
                 </SelectItem>
                 <SelectItem value="system">
                   <div className="flex items-center">
-                     {/* Placeholder for system icon */}
                     <Palette className="mr-2 h-4 w-4" /> System
                   </div>
                 </SelectItem>

@@ -4,10 +4,8 @@ import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { QueryProvider } from '@/providers/query-provider';
+import { ThemeInitializer } from '@/components/layout/theme-initializer';
 
-// No need to call GeistSans and GeistMono as functions here,
-// they are directly usable as className or style variables.
-// The variable assignment will be handled by Tailwind config.
 
 export const metadata: Metadata = {
   title: 'Gorkhali Offset Press - Employee Management',
@@ -21,7 +19,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className={`antialiased`} suppressHydrationWarning={true}> {/* Font variables are applied in html tag now */}
+      <body className={`antialiased`} suppressHydrationWarning={true}>
+        <ThemeInitializer />
         <QueryProvider>
           {children}
           <Toaster />
