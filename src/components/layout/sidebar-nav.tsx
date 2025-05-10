@@ -20,10 +20,10 @@ export function SidebarNav() {
             <SidebarMenuButton
               isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start text-sidebar-foreground/80 hover:text-sidebar-foreground", // Default state
                 (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href)))
-                  ? "bg-primary/10 text-primary hover:bg-primary/20"
-                  : "hover:bg-accent/50"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" // Active state
+                  : "hover:bg-sidebar-accent/80" // Hover state for non-active
               )}
               tooltip={{ children: item.label, side: "right", align: "center" }}
             >

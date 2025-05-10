@@ -20,22 +20,19 @@ import { Button } from "@/components/ui/button";
 export default function AppLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar collapsible="icon" className="border-r">
+      <Sidebar collapsible="icon" className="border-r bg-sidebar text-sidebar-foreground">
         <SidebarHeader className="p-4 flex items-center justify-between">
-            {/* Updated Link and Span for conditional text visibility */}
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg text-primary">
+            <Link href="/dashboard" className="flex items-center gap-2.5 font-semibold text-xl text-sidebar-primary hover:text-sidebar-primary/90 transition-colors">
                 <Printer className="h-6 w-6" />
-                {/* This span will be hidden when the parent Sidebar has data-collapsible="icon" */}
                 <span className="group-data-[collapsible=icon]:hidden">{APP_NAME}</span>
             </Link>
-            {/* SidebarTrigger is now directly here, its visibility handled by parent states or its own logic if any */}
-            <SidebarTrigger />
+            <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent" />
         </SidebarHeader>
         <SidebarContent className="p-2 pr-0">
           <SidebarNav />
         </SidebarContent>
-        <SidebarFooter className="p-2 mt-auto">
-            <Button variant="ghost" className="w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0" asChild>
+        <SidebarFooter className="p-2 mt-auto border-t border-sidebar-border">
+            <Button variant="ghost" className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:p-0" asChild>
                 <Link href="/settings">
                     <Settings className="h-5 w-5 mr-3 group-data-[collapsible=icon]:mr-0" />
                     <span className="truncate group-data-[collapsible=icon]:hidden">Settings</span>
@@ -45,7 +42,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
       </Sidebar>
       <SidebarInset className="flex flex-col">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6 bg-background">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-background">
           {children}
         </main>
       </SidebarInset>
