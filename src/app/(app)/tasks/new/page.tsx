@@ -4,7 +4,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useFormState, useFormStatus } from "react-dom";
-import type * as z from "zod";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -28,7 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { handleCreateTask, CreateTaskSchema, type CreateTaskState } from "@/lib/actions";
+import { handleCreateTask } from "@/lib/actions"; 
+import { CreateTaskSchema, type CreateTaskState, type CreateTaskFormValues } from "@/lib/schemas/task"; 
 import { TEAMS, TASK_STATUSES } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, Send } from "lucide-react";
@@ -53,7 +53,7 @@ export default function NewTaskPage() {
   const [state, formAction] = useFormState(handleCreateTask, initialState);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof CreateTaskSchema>>({
+  const form = useForm<CreateTaskFormValues>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
       taskName: "",
@@ -65,10 +65,10 @@ export default function NewTaskPage() {
     // Pass server-side errors to the form
     errors: state?.errors ? Object.entries(state.errors).reduce((acc, [key, value]) => {
       if (value && value.length > 0) {
-        acc[key] = { type: 'manual', message: value.join(', ') };
+        acc[key as keyof CreateTaskFormValues] = { type: 'manual', message: value.join(', ') };
       }
       return acc;
-    }, {}) : undefined,
+    }, {} as any) : undefined, // Using 'as any' for now to reconcile types, ideally improve this
   });
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function NewTaskPage() {
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
         if (fieldErrors && fieldErrors.length > 0) {
-          form.setError(fieldName as keyof z.infer<typeof CreateTaskSchema>, {
+          form.setError(fieldName as keyof CreateTaskFormValues, {
             type: 'server',
             message: fieldErrors.join(', '),
           });
