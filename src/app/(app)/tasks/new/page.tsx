@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { useEffect, useActionState } from "react"; 
+import { useEffect, useActionState, useState } from "react"; 
 import { useFormStatus } from "react-dom"; 
 
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { handleCreateTask } from "@/lib/actions"; 
+import { handleCreateTask, fetchEmployees } from "@/lib/actions"; 
 import { CreateTaskSchema, type CreateTaskState, type CreateTaskFormValues } from "@/lib/schemas/task"; 
-import { TEAMS, TASK_STATUSES, TASK_PRIORITIES, CURRENT_USER_DATA, EMPLOYEES_SAMPLE } from "@/lib/constants";
+import { TEAMS, TASK_STATUSES, TASK_PRIORITIES, CURRENT_USER_DATA } from "@/lib/constants";
+import type { EmployeeProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, Send } from "lucide-react";
 
@@ -53,6 +54,7 @@ export default function NewTaskPage() {
   const [state, formAction] = useActionState(handleCreateTask, initialState); 
   const { toast } = useToast();
   const isAdmin = CURRENT_USER_DATA.role === 'admin';
+  const [employeesForSelect, setEmployeesForSelect] = useState<EmployeeProfile[]>([]);
 
   const form = useForm<CreateTaskFormValues>({
     resolver: zodResolver(CreateTaskSchema),
@@ -64,8 +66,26 @@ export default function NewTaskPage() {
       status: "To Do",
       priority: "Normal",
     },
-    // Errors are now primarily set via form.setError in useEffect
   });
+
+  useEffect(() => {
+    if (isAdmin) {
+      async function loadEmployeesForSelect() {
+        try {
+          const fetchedEmployees = await fetchEmployees();
+          setEmployeesForSelect(fetchedEmployees);
+        } catch (error) {
+          console.error("Failed to load employees for select:", error);
+          toast({
+            title: "Error",
+            description: "Could not load employee list for assignment.",
+            variant: "destructive",
+          });
+        }
+      }
+      loadEmployeesForSelect();
+    }
+  }, [isAdmin, toast]);
 
   useEffect(() => {
     if (state?.message) {
@@ -77,10 +97,9 @@ export default function NewTaskPage() {
     }
 
     if (state?.success) {
-      form.reset(); // Resets to defaultValues defined in useForm including isAdmin logic for assignedTo
+      form.reset(); 
     } 
     
-    // Clear previous errors before setting new ones from action state
     form.clearErrors(); 
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
@@ -92,7 +111,7 @@ export default function NewTaskPage() {
         }
       });
     }
-  }, [state, toast, form, isAdmin]); // isAdmin is needed if defaultValues in useForm depends on it for reset
+  }, [state, toast, form, isAdmin]);
 
   return (
     <div className="space-y-6">
@@ -152,7 +171,7 @@ export default function NewTaskPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Team</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                      <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a team" />
@@ -178,14 +197,15 @@ export default function NewTaskPage() {
                     <FormItem>
                       <FormLabel>Assigned To</FormLabel>
                       {isAdmin ? (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select an employee" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {EMPLOYEES_SAMPLE.map((employee) => (
+                            {employeesForSelect.length === 0 && <SelectItem value="" disabled>Loading employees...</SelectItem>}
+                            {employeesForSelect.map((employee) => (
                               <SelectItem key={employee.id} value={employee.name}>
                                 {employee.name} ({employee.team})
                               </SelectItem>
@@ -212,7 +232,7 @@ export default function NewTaskPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select task status" />
@@ -237,7 +257,7 @@ export default function NewTaskPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Priority</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select task priority" />
@@ -257,7 +277,7 @@ export default function NewTaskPage() {
                   )}
                 />
               </div>
-               {state?.errors?.general && ( // General errors can still be displayed if they exist
+               {state?.errors?.general && ( 
                 <FormMessage>{state.errors.general.join(", ")}</FormMessage>
               )}
             </CardContent>

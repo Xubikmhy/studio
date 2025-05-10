@@ -3,8 +3,68 @@
 
 import { CreateTaskSchema, type CreateTaskState } from "@/lib/schemas/task"; 
 import { CreateEmployeeSchema, type CreateEmployeeState } from "@/lib/schemas/employee";
-// import { EMPLOYEES_SAMPLE } from "@/lib/constants"; // Cannot modify constants directly in server action for persistent effect
+import { 
+    addEmployeeToStore, 
+    getEmployeesFromStore,
+    addTaskToStore,
+    getTasksFromStore,
+    getTasksForUserFromStore,
+    addOrUpdateAttendanceRecordStore,
+    getAttendanceRecordsFromStore,
+    getAttendanceRecordsForUserFromStore,
+    getTodaysAttendanceForUserFromStore,
+} from "./data-store";
+import type { EmployeeProfile, Task, AttendanceRecord } from "./types";
 
+// --- Employee Actions ---
+export async function handleCreateEmployee(
+  prevState: CreateEmployeeState,
+  formData: FormData
+): Promise<CreateEmployeeState> {
+  const validatedFields = CreateEmployeeSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    team: formData.get("team"),
+    roleInternal: formData.get("roleInternal"),
+    baseSalary: formData.get("baseSalary"), // Zod schema handles coercion
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Validation failed. Please check the employee details.",
+      success: false,
+    };
+  }
+
+  try {
+    // roleInternal is now correctly part of validatedFields.data
+    await addEmployeeToStore(validatedFields.data);
+    return {
+      message: `Employee "${validatedFields.data.name}" created successfully!`,
+      errors: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to create employee:", error);
+    return {
+      message: "An error occurred while creating the employee.",
+      errors: { general: ["Server error, please try again."] },
+      success: false,
+    };
+  }
+}
+
+export async function fetchEmployees(): Promise<EmployeeProfile[]> {
+  try {
+    return await getEmployeesFromStore();
+  } catch (error) {
+    console.error("Failed to fetch employees:", error);
+    return []; // Return empty array on error
+  }
+}
+
+// --- Task Actions ---
 export async function handleCreateTask(
   prevState: CreateTaskState,
   formData: FormData
@@ -26,64 +86,92 @@ export async function handleCreateTask(
     };
   }
 
-  // In a real application, you would save this data to a database.
-  // For now, we'll just log it and return a success message.
-  console.log("New Task Data:", validatedFields.data);
-
-  // Simulate database operation
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  return {
-    message: `Task "${validatedFields.data.taskName}" created successfully!`,
-    errors: null,
-    success: true,
-  };
-}
-
-
-export async function handleCreateEmployee(
-  prevState: CreateEmployeeState,
-  formData: FormData
-): Promise<CreateEmployeeState> {
-  const validatedFields = CreateEmployeeSchema.safeParse({
-    name: formData.get("name"),
-    email: formData.get("email"),
-    team: formData.get("team"),
-    roleInternal: formData.get("roleInternal"),
-    baseSalary: formData.get("baseSalary"),
-  });
-
-  if (!validatedFields.success) {
+  try {
+    await addTaskToStore(validatedFields.data);
     return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: "Validation failed. Please check the employee details.",
+      message: `Task "${validatedFields.data.taskName}" created successfully!`,
+      errors: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to create task:", error);
+    return {
+      message: "An error occurred while creating the task.",
+      errors: { general: ["Server error, please try again."] },
       success: false,
     };
   }
+}
 
-  const newEmployeeData = validatedFields.data;
-  
-  // In a real application, you would save this data to a database.
-  // For this simulation, we are just logging it. The EMPLOYEES_SAMPLE array in constants.ts
-  // cannot be dynamically updated by this server action in a persistent way.
-  console.log("New Employee Data (Simulated Save):", newEmployeeData);
-  
-  // Example of how one might add to a global store if this were client-side or a different architecture
-  // This won't actually update the EMPLOYEES_SAMPLE for other requests/users.
-  // EMPLOYEES_SAMPLE.push({
-  //   id: String(Date.now()), // Temporary ID
-  //   ...newEmployeeData,
-  //   avatar: `https://picsum.photos/seed/${encodeURIComponent(newEmployeeData.name)}/100/100`,
-  //   role: newEmployeeData.roleInternal, // or map to a UserRole if different
-  // });
+export async function fetchTasks(): Promise<Task[]> {
+   try {
+    return await getTasksFromStore();
+  } catch (error) {
+    console.error("Failed to fetch tasks:", error);
+    return [];
+  }
+}
+
+export async function fetchUserTasks(userName: string): Promise<Task[]> {
+  try {
+    return await getTasksForUserFromStore(userName);
+  } catch (error) {
+    console.error(`Failed to fetch tasks for user ${userName}:`, error);
+    return [];
+  }
+}
 
 
-  // Simulate database operation
-  await new Promise(resolve => setTimeout(resolve, 1000));
+// --- Attendance Actions ---
+export async function punchIn(employeeId: string, employeeName: string): Promise<{ success: boolean; message: string; record?: AttendanceRecord | null }> {
+  try {
+    const record = await addOrUpdateAttendanceRecordStore(employeeId, employeeName, 'punch-in');
+    if (record) {
+      return { success: true, message: "Punched in successfully.", record };
+    }
+    return { success: false, message: "Already punched in today or error." };
+  } catch (error) {
+    console.error("Punch in error:", error);
+    return { success: false, message: "Server error during punch in." };
+  }
+}
 
-  return {
-    message: `Employee "${newEmployeeData.name}" created successfully! (Simulated)`,
-    errors: null,
-    success: true,
-  };
+export async function punchOut(employeeId: string, employeeName: string): Promise<{ success: boolean; message: string; record?: AttendanceRecord | null }> {
+  try {
+    const record = await addOrUpdateAttendanceRecordStore(employeeId, employeeName, 'punch-out');
+     if (record && record.checkOut) {
+      return { success: true, message: "Punched out successfully.", record };
+    }
+    return { success: false, message: "Not punched in or error during punch out." };
+  } catch (error) {
+    console.error("Punch out error:", error);
+    return { success: false, message: "Server error during punch out." };
+  }
+}
+
+export async function fetchAttendanceRecords(): Promise<AttendanceRecord[]> {
+  try {
+    return await getAttendanceRecordsFromStore();
+  } catch (error) {
+    console.error("Failed to fetch attendance records:", error);
+    return [];
+  }
+}
+
+export async function fetchUserAttendanceRecords(employeeId: string): Promise<AttendanceRecord[]> {
+   try {
+    return await getAttendanceRecordsForUserFromStore(employeeId);
+  } catch (error) {
+    console.error(`Failed to fetch attendance for user ${employeeId}:`, error);
+    return [];
+  }
+}
+
+export async function fetchTodaysUserAttendance(employeeId: string): Promise<AttendanceRecord | null> {
+    try {
+        return await getTodaysAttendanceForUserFromStore(employeeId);
+    } catch (error) {
+        console.error(`Failed to fetch today's attendance for user ${employeeId}:`, error);
+        return null;
+    }
 }

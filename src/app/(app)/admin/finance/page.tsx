@@ -1,29 +1,29 @@
-
 "use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, DollarSign, TrendingDown, ListFilter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { EMPLOYEES_SAMPLE } from "@/lib/constants";
+import { INITIAL_EMPLOYEES } from "@/lib/constants"; // Use INITIAL_EMPLOYEES
+import type { SalaryPayment, SalaryAdvance } from "@/lib/types"; // Import types
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
-// Placeholder Salary Payment Data
-const salaryPayments = [
-  { id: "sp1", employeeId: "1", employeeName: EMPLOYEES_SAMPLE[0].name, amount: 60000, paymentDate: "2024-07-30", notes: "July Salary" },
-  { id: "sp2", employeeId: "2", employeeName: EMPLOYEES_SAMPLE[1].name, amount: 55000, paymentDate: "2024-07-30", notes: "July Salary" },
-  { id: "sp3", employeeId: "4", employeeName: EMPLOYEES_SAMPLE[3].name, amount: 80000, paymentDate: "2024-07-29", notes: "July Salary + Bonus" },
+// Placeholder Salary Payment Data using INITIAL_EMPLOYEES
+const salaryPayments: SalaryPayment[] = [
+  { id: "sp1", employeeId: INITIAL_EMPLOYEES[0].id, employeeName: INITIAL_EMPLOYEES[0].name, amount: 60000, paymentDate: "2024-07-30", notes: "July Salary" },
+  { id: "sp2", employeeId: INITIAL_EMPLOYEES[1].id, employeeName: INITIAL_EMPLOYEES[1].name, amount: 55000, paymentDate: "2024-07-30", notes: "July Salary" },
+  { id: "sp3", employeeId: INITIAL_EMPLOYEES[3].id, employeeName: INITIAL_EMPLOYEES[3].name, amount: 80000, paymentDate: "2024-07-29", notes: "July Salary + Bonus" },
 ];
 
-// Placeholder Salary Advance Data
-const salaryAdvances = [
-  { id: "sa1", employeeId: "3", employeeName: EMPLOYEES_SAMPLE[2].name, amount: 5000, advanceDate: "2024-07-15", reason: "Medical Emergency", status: "Pending" },
-  { id: "sa2", employeeId: "1", employeeName: EMPLOYEES_SAMPLE[0].name, amount: 10000, advanceDate: "2024-06-20", reason: "Personal", status: "Partially Repaid" },
-  { id: "sa3", employeeId: "2", employeeName: EMPLOYEES_SAMPLE[1].name, amount: 7000, advanceDate: "2024-08-02", reason: "Urgent Need", status: "Approved" },
+// Placeholder Salary Advance Data using INITIAL_EMPLOYEES
+const salaryAdvances: SalaryAdvance[] = [
+  { id: "sa1", employeeId: INITIAL_EMPLOYEES[2].id, employeeName: INITIAL_EMPLOYEES[2].name, amount: 5000, advanceDate: "2024-07-15", reason: "Medical Emergency", status: "Pending" },
+  { id: "sa2", employeeId: INITIAL_EMPLOYEES[0].id, employeeName: INITIAL_EMPLOYEES[0].name, amount: 10000, advanceDate: "2024-06-20", reason: "Personal", status: "Partially Repaid" },
+  { id: "sa3", employeeId: INITIAL_EMPLOYEES[1].id, employeeName: INITIAL_EMPLOYEES[1].name, amount: 7000, advanceDate: "2024-08-02", reason: "Urgent Need", status: "Approved" },
 ];
 
-const getAdvanceStatusVariant = (status: string) => {
+const getAdvanceStatusVariant = (status: SalaryAdvance['status']) => {
   switch (status.toLowerCase()) {
     case "pending": return "warning";
     case "approved": return "info";
@@ -161,20 +161,20 @@ export default function AdminFinancePage() {
        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
             <CardTitle>Financial Summary</CardTitle>
-            <CardDescription>Overview of key financial metrics.</CardDescription>
+            <CardDescription>Overview of key financial metrics. (Simulated Data)</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Total Salaries Paid (This Month)</p>
-                <p className="text-2xl font-bold text-foreground">NPR 195,000</p> 
+                <p className="text-2xl font-bold text-foreground">NPR {salaryPayments.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</p> 
             </div>
             <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Total Advances Outstanding</p>
-                <p className="text-2xl font-bold text-foreground">NPR 22,000</p>
+                <p className="text-2xl font-bold text-foreground">NPR {salaryAdvances.filter(a => a.status !== 'Repaid').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</p>
             </div>
              <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Employees with Advances</p>
-                <p className="text-2xl font-bold text-foreground">3</p>
+                <p className="text-2xl font-bold text-foreground">{new Set(salaryAdvances.filter(a => a.status !== 'Repaid').map(a => a.employeeId)).size}</p>
             </div>
         </CardContent>
       </Card>

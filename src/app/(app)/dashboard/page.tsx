@@ -1,55 +1,74 @@
-
 "use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Briefcase, Clock, Users2, LogIn, LogOut, Flame } from "lucide-react"; // Added Flame for urgent task
+import { PlusCircle, Briefcase, Clock, Users2, LogIn, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast"; 
-import { CURRENT_USER_DATA, ALL_TASKS, ALL_ATTENDANCE_RECORDS, UrgentTaskIcon } from "@/lib/constants";
-import { useState, useEffect } from "react";
+import { CURRENT_USER_DATA, UrgentTaskIcon, INITIAL_ATTENDANCE_RECORDS, INITIAL_TASKS } from "@/lib/constants"; // Keep INITIAL_ for recent activity simulation for now
+import type { Task, AttendanceRecord } from "@/lib/types";
+import { useState, useEffect, useCallback } from "react";
+import { fetchUserTasks, punchIn, punchOut, fetchTodaysUserAttendance } from "@/lib/actions";
 
 export default function DashboardPage() {
   const { toast } = useToast(); 
-  const [userTasksCompleted, setUserTasksCompleted] = useState(0);
-  const [userTasksTotal, setUserTasksTotal] = useState(0);
-  const [userTodayHours, setUserTodayHours] = useState("N/A");
+  const [userTasks, setUserTasks] = useState<Task[]>([]);
+  const [todayAttendance, setTodayAttendance] = useState<AttendanceRecord | null>(null);
+  const [isPunching, setIsPunching] = useState(false);
 
   const currentUser = CURRENT_USER_DATA;
   const isAdmin = currentUser.role === 'admin';
 
-  useEffect(() => {
-    // Simulate fetching user-specific task data
-    const tasksForUser = ALL_TASKS.filter(task => task.assignedTo === currentUser.name);
-    setUserTasksCompleted(tasksForUser.filter(task => task.status === "Finished").length);
-    setUserTasksTotal(tasksForUser.length);
+  const loadDashboardData = useCallback(async () => {
+    // Fetch user-specific task data
+    const tasksForUser = await fetchUserTasks(currentUser.name);
+    setUserTasks(tasksForUser);
 
-    // Simulate fetching user's attendance for today
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const todayRecord = ALL_ATTENDANCE_RECORDS.find(
-      record => record.employeeId === currentUser.id && record.date === today
-    );
-    setUserTodayHours(todayRecord?.totalHours || "0h 0m");
-
+    // Fetch user's attendance for today
+    const attendanceRecord = await fetchTodaysUserAttendance(currentUser.id);
+    setTodayAttendance(attendanceRecord);
   }, [currentUser.id, currentUser.name]);
 
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
-  const handlePunchIn = () => {
+  const userTasksCompleted = userTasks.filter(task => task.status === "Finished").length;
+  const userTasksTotal = userTasks.length;
+  const userTodayHours = todayAttendance?.totalHours || (todayAttendance?.checkIn && !todayAttendance?.checkOut ? "Punched In" : "N/A");
+
+
+  const handlePunchIn = async () => {
+    setIsPunching(true);
+    const result = await punchIn(currentUser.id, currentUser.name);
     toast({
-      title: "Punch In Successful",
-      description: `Welcome, ${currentUser.name}! Your check-in has been recorded (simulated).`,
-      variant: "success", 
+      title: result.success ? "Punch In Successful" : "Punch In Failed",
+      description: result.message,
+      variant: result.success ? "success" : "destructive", 
     });
-    // Simulate updating attendance, e.g., setUserTodayHours if this were a real punch-in
+    if (result.success) {
+      setTodayAttendance(result.record || null);
+    }
+    setIsPunching(false);
   };
 
-  const handlePunchOut = () => {
+  const handlePunchOut = async () => {
+    setIsPunching(true);
+    const result = await punchOut(currentUser.id, currentUser.name);
     toast({
-      title: "Punch Out Successful",
-      description: `Goodbye, ${currentUser.name}! Your check-out has been recorded (simulated).`,
-      variant: "default", 
+      title: result.success ? "Punch Out Successful" : "Punch Out Failed",
+      description: result.message,
+      variant: result.success ? "default" : "destructive", 
     });
-     // Simulate updating attendance
+    if (result.success) {
+      setTodayAttendance(result.record || null);
+    }
+    setIsPunching(false);
   };
+
+  // Simulate recent activity from constants for now
+  const recentActivityTasks = INITIAL_TASKS.filter(task => task.assignedTo === currentUser.name && task.priority === "Urgent" && task.status !== "Finished");
+  const lastPunchIn = INITIAL_ATTENDANCE_RECORDS.find(rec => rec.employeeId === currentUser.id);
+
 
   return (
     <div className="space-y-6">
@@ -78,14 +97,24 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{userTodayHours}</div>
             <p className="text-xs text-muted-foreground">
-              Total hours logged today
+              {userTodayHours === "N/A" ? "Not punched in today" : (userTodayHours === "Punched In" ? `Checked in at ${todayAttendance?.checkIn}` : `Total hours logged today`)}
             </p>
             
             <div className="mt-4 flex gap-2">
-              <Button variant="success" onClick={handlePunchIn} className="flex-1">
+              <Button 
+                variant="success" 
+                onClick={handlePunchIn} 
+                className="flex-1"
+                disabled={isPunching || (!!todayAttendance?.checkIn && !todayAttendance?.checkOut)}
+              >
                 <LogIn className="mr-2 h-4 w-4" /> Punch In
               </Button>
-              <Button variant="destructive" onClick={handlePunchOut} className="flex-1">
+              <Button 
+                variant="destructive" 
+                onClick={handlePunchOut} 
+                className="flex-1"
+                disabled={isPunching || !todayAttendance?.checkIn || !!todayAttendance?.checkOut}
+              >
                 <LogOut className="mr-2 h-4 w-4" /> Punch Out
               </Button>
             </div>
@@ -126,8 +155,8 @@ export default function DashboardPage() {
               <p className="text-muted-foreground text-sm">
                 Quick summary of team activities and productivity metrics. (Admin View)
               </p>
-              <Button variant="outline" size="sm" className="mt-4 w-full"> 
-                View Team Details (Simulated)
+              <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => toast({ title: "Team Overview", description: "This feature is not yet implemented."})}> 
+                View Team Details
               </Button>
             </CardContent>
           </Card>
@@ -149,17 +178,19 @@ export default function DashboardPage() {
       <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest updates and notifications relevant to you.</CardDescription>
+          <CardDescription>Latest updates and notifications relevant to you. (Simulated)</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* This would be dynamically populated based on user's activities or relevant system events */}
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start p-2 hover:bg-muted rounded-md transition-colors">
-              <UrgentTaskIcon className="h-4 w-4 text-destructive mr-2 mt-0.5 shrink-0" />
-              <span><strong>URGENT:</strong> Task "Update website homepage content" assigned to you is overdue.</span>
-            </li>
-            <li className="p-2 hover:bg-muted rounded-md transition-colors">- Task "Design new brochure" updated to Ongoing.</li>
-            <li className="p-2 hover:bg-muted rounded-md transition-colors">- You punched in at 9:03 AM.</li>
+            {recentActivityTasks.map(task => (
+                 <li key={task.id} className="flex items-start p-2 hover:bg-muted rounded-md transition-colors">
+                    <UrgentTaskIcon className="h-4 w-4 text-destructive mr-2 mt-0.5 shrink-0" />
+                    <span><strong>URGENT:</strong> Task "{task.name}" assigned to you is marked as urgent and is {task.status}.</span>
+                </li>
+            ))}
+            {lastPunchIn && (
+                 <li className="p-2 hover:bg-muted rounded-md transition-colors">- You last punched in on {lastPunchIn.date} at {lastPunchIn.checkIn}.</li>
+            )}
             <li className="p-2 hover:bg-muted rounded-md transition-colors">- New company announcement: "System Maintenance".</li>
           </ul>
         </CardContent>

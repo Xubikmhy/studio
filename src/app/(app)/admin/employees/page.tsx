@@ -1,19 +1,38 @@
-
 "use client";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, UserCog, ListFilter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { EMPLOYEES_SAMPLE } from "@/lib/constants"; // Updated import
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-
-// Use employee data from constants
-const employees = EMPLOYEES_SAMPLE;
+import { fetchEmployees } from "@/lib/actions";
+import type { EmployeeProfile } from "@/lib/types"; // Import EmployeeProfile type
 
 export default function AdminEmployeesPage() {
   const { toast } = useToast();
+  const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadEmployees() {
+      setIsLoading(true);
+      try {
+        const fetchedEmployees = await fetchEmployees();
+        setEmployees(fetchedEmployees);
+      } catch (error) {
+        console.error("Failed to load employees:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load employee data.",
+          variant: "destructive",
+        });
+      }
+      setIsLoading(false);
+    }
+    loadEmployees();
+  }, [toast]);
 
   const handleFilter = () => {
     toast({
@@ -37,6 +56,33 @@ export default function AdminEmployeesPage() {
     // In a real app, you might navigate to an edit page:
     // router.push(`/admin/employees/${employeeId}/edit`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Manage Employees</h1>
+              <p className="text-muted-foreground">Add, edit, or remove employee profiles.</p>
+          </div>
+          <Button asChild disabled>
+            <Link href="/admin/employees/new">
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Employee
+            </Link>
+          </Button>
+        </div>
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Employee List</CardTitle>
+            <CardDescription>Loading employee data...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground text-center py-8">Loading...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -74,7 +120,7 @@ export default function AdminEmployeesPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Team</TableHead>
-                <TableHead>Role</TableHead> {/* Using the 'role' field which now corresponds to 'roleInternal' */}
+                <TableHead>Role</TableHead>
                 <TableHead>Base Salary (NPR)</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -85,7 +131,7 @@ export default function AdminEmployeesPage() {
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>{employee.email}</TableCell>
                   <TableCell><Badge variant="secondary">{employee.team}</Badge></TableCell>
-                  <TableCell>{employee.role}</TableCell> {/* Displaying the job title/role */}
+                  <TableCell>{employee.roleInternal}</TableCell> {/* Displaying the job title/roleInternal */}
                   <TableCell>{employee.baseSalary.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => handleEditEmployee(employee.id)}>
@@ -97,7 +143,7 @@ export default function AdminEmployeesPage() {
               ))}
             </TableBody>
           </Table>
-           {employees.length === 0 && (
+           {employees.length === 0 && !isLoading && (
              <p className="text-muted-foreground text-center py-8">No employees found. Start by adding a new employee.</p>
            )}
         </CardContent>

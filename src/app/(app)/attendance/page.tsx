@@ -1,20 +1,42 @@
-
 "use client";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ListFilter, Download, Users } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { CURRENT_USER_DATA, ALL_ATTENDANCE_RECORDS } from "@/lib/constants";
+import { CURRENT_USER_DATA } from "@/lib/constants";
+import type { AttendanceRecord } from "@/lib/types";
+import { fetchAttendanceRecords, fetchUserAttendanceRecords } from "@/lib/actions";
 
 export default function AttendancePage() {
   const { toast } = useToast();
   const currentUser = CURRENT_USER_DATA;
   const isAdmin = currentUser.role === 'admin';
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const attendanceRecords = isAdmin 
-    ? ALL_ATTENDANCE_RECORDS 
-    : ALL_ATTENDANCE_RECORDS.filter(record => record.employeeId === currentUser.id);
+  useEffect(() => {
+    async function loadAttendance() {
+      setIsLoading(true);
+      try {
+        const fetchedRecords = isAdmin 
+          ? await fetchAttendanceRecords() 
+          : await fetchUserAttendanceRecords(currentUser.id);
+        setAttendanceRecords(fetchedRecords);
+      } catch (error) {
+        console.error("Failed to load attendance records:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load attendance data.",
+          variant: "destructive",
+        });
+      }
+      setIsLoading(false);
+    }
+    loadAttendance();
+  }, [isAdmin, currentUser.id, toast]);
+
 
   const handleFilter = () => {
     toast({
@@ -29,6 +51,33 @@ export default function AttendancePage() {
       description: "Exporting attendance data (simulated). This feature is not yet implemented.",
     });
   };
+  
+  if (isLoading) {
+    return (
+       <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                {isAdmin ? "Company Attendance Log" : "My Attendance Log"}
+                </h1>
+                <p className="text-muted-foreground">
+                {isAdmin ? "View all employee check-ins, check-outs, and attendance history." : "View your daily check-ins, check-outs, and attendance history."}
+                </p>
+            </div>
+        </div>
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>{isAdmin ? "All Records" : "My Records"}</CardTitle>
+            <CardDescription>Loading attendance data...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground text-center py-8">Loading...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
 
   return (
     <div className="space-y-6">
@@ -76,14 +125,14 @@ export default function AttendancePage() {
                 <TableRow key={record.id}>
                   {isAdmin && <TableCell className="font-medium">{record.employeeName}</TableCell>}
                   <TableCell className={!isAdmin ? "font-medium" : ""}>{record.date}</TableCell>
-                  <TableCell>{record.checkIn}</TableCell>
-                  <TableCell>{record.checkOut}</TableCell>
-                  <TableCell className="text-right">{record.totalHours}</TableCell>
+                  <TableCell>{record.checkIn || "---"}</TableCell>
+                  <TableCell>{record.checkOut || "---"}</TableCell>
+                  <TableCell className="text-right">{record.totalHours || "---"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-           {attendanceRecords.length === 0 && (
+           {attendanceRecords.length === 0 && !isLoading && (
              <p className="text-muted-foreground text-center py-8">
                {isAdmin ? "No attendance records found for any employee." : "No attendance records found for you."}
              </p>
@@ -102,7 +151,7 @@ export default function AttendancePage() {
             {/* Placeholder for charts or summary tables */}
             <div className="mt-4 p-4 border rounded-lg bg-card/50">
                 <p className="text-sm font-medium text-muted-foreground">Overall Company Attendance (Today)</p>
-                <p className="text-xl font-bold text-foreground">85%</p>
+                <p className="text-xl font-bold text-foreground">85% (Simulated)</p>
             </div>
           </CardContent>
         </Card>

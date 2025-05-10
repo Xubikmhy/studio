@@ -1,14 +1,15 @@
-
 "use client";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { PlusCircle, ListFilter, AlertTriangle } from "lucide-react"; // Added AlertTriangle for urgent tasks
+import { PlusCircle, ListFilter } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import type { TaskStatus, TaskPriority } from "@/lib/constants"; // Added TaskPriority
-import { CURRENT_USER_DATA, ALL_TASKS, UrgentTaskIcon } from "@/lib/constants";
+import type { Task, TaskStatus } from "@/lib/types";
+import { CURRENT_USER_DATA, UrgentTaskIcon } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { fetchTasks, fetchUserTasks } from "@/lib/actions";
 
 const getTaskStatusVariant = (status: TaskStatus): BadgeProps['variant'] => {
   switch (status) {
@@ -29,10 +30,27 @@ export default function TasksPage() {
   const { toast } = useToast();
   const currentUser = CURRENT_USER_DATA;
   const isAdmin = currentUser.role === 'admin';
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const tasks = isAdmin
-    ? ALL_TASKS
-    : ALL_TASKS.filter(task => task.assignedTo === currentUser.name);
+  useEffect(() => {
+    async function loadTasks() {
+      setIsLoading(true);
+      try {
+        const fetchedTasks = isAdmin ? await fetchTasks() : await fetchUserTasks(currentUser.name);
+        setTasks(fetchedTasks);
+      } catch (error) {
+        console.error("Failed to load tasks:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load task data.",
+          variant: "destructive",
+        });
+      }
+      setIsLoading(false);
+    }
+    loadTasks();
+  }, [isAdmin, currentUser.name, toast]);
 
   const handleFilterTasks = () => {
     toast({
@@ -40,6 +58,42 @@ export default function TasksPage() {
       description: "Task filtering functionality (simulated). This feature is not yet implemented.",
     });
   };
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              {isAdmin ? "All Tasks" : "My Tasks"}
+            </h1>
+            <p className="text-muted-foreground">
+              {isAdmin ? "Log, track, and manage all tasks across the company." : "Log, track, and manage your assigned tasks efficiently."}
+            </p>
+          </div>
+           <div className="flex gap-2">
+             <Button variant="outline" onClick={handleFilterTasks} disabled>
+                <ListFilter className="mr-2 h-4 w-4" /> Filter Tasks
+            </Button>
+            <Button asChild disabled>
+                 <Link href="/tasks/new">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Log New Task
+                </Link>
+            </Button>
+        </div>
+        </div>
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>{isAdmin ? "Task List" : "My Task List"}</CardTitle>
+            <CardDescription>Loading task data...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground text-center py-8">Loading...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -93,6 +147,7 @@ export default function TasksPage() {
                       Team: {task.team}
                       {isAdmin && ` - Assigned to: ${task.assignedTo}`}
                     </p>
+                    {task.description && <p className="text-xs text-muted-foreground mt-1 pl-1 italic">{task.description}</p>}
                   </div>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 self-start sm:self-center">
                      {task.priority === "Urgent" && (
