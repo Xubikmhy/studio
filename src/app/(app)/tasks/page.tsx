@@ -62,7 +62,7 @@ export default function TasksPage() {
         </div>
       </div>
       
-      <Card className="shadow-md">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
           <CardTitle>Current Tasks</CardTitle>
           <CardDescription>A list of tasks currently active or recently completed.</CardDescription>
@@ -71,7 +71,7 @@ export default function TasksPage() {
           {tasks.length > 0 ? (
             <ul className="space-y-3">
               {tasks.map(task => (
-                <li key={task.id} className="flex justify-between items-center p-3 bg-background rounded-md border hover:shadow-sm transition-shadow">
+                <li key={task.id} className="flex justify-between items-center p-3 bg-background rounded-md border hover:shadow-sm transition-shadow duration-150">
                   <div>
                     <p className="font-medium text-foreground">{task.name}</p>
                     <p className="text-xs text-muted-foreground">{task.team} - Assigned to {task.assignedTo}</p>

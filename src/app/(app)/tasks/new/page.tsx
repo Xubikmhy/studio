@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use client";
 
@@ -113,7 +114,7 @@ export default function NewTaskPage() {
         </div>
       </div>
 
-      <Card className="shadow-md">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <Form {...form}>
           <form action={formAction} className="space-y-0">
             <CardContent className="space-y-6 pt-6">

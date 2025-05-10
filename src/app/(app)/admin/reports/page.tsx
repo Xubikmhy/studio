@@ -24,7 +24,7 @@ export default function AdminReportsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="shadow-md">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader>
             <FileText className="h-8 w-8 text-primary mb-2" />
             <CardTitle>Attendance Reports</CardTitle>
@@ -47,7 +47,7 @@ export default function AdminReportsPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader>
             <CalendarDays className="h-8 w-8 text-primary mb-2" />
             <CardTitle>Task Completion Reports</CardTitle>
@@ -70,7 +70,7 @@ export default function AdminReportsPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader>
             <Users className="h-8 w-8 text-primary mb-2" />
             <CardTitle>Team Productivity Reports</CardTitle>

@@ -42,7 +42,7 @@ export default function AttendancePage() {
         {/* Punch In/Out buttons removed from here */}
       </div>
 
-      <Card className="shadow-md">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader className="flex flex-row justify-between items-center">
             <div>
                 <CardTitle>My Attendance Log</CardTitle>
@@ -87,7 +87,7 @@ export default function AttendancePage() {
       {/* Placeholder for Admin view or Team view */}
       {/* This section would be conditionally rendered based on user role */}
       {/* 
-      <Card>
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
           <CardTitle>Team Attendance Overview</CardTitle>
           <CardDescription>View attendance for your team members.</CardDescription>

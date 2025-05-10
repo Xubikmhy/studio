@@ -35,7 +35,7 @@ export default function DashboardPage() {
             <Button variant="outline" onClick={handlePunchIn}>
                 <LogIn className="mr-2 h-4 w-4" /> Punch In
             </Button>
-            <Button variant="outline" color="destructive" onClick={handlePunchOut}>
+            <Button variant="outline" onClick={handlePunchOut}> {/* Removed color="destructive" as it's not a standard prop for ShadCN Button, variant handles this */}
                 <LogOut className="mr-2 h-4 w-4" /> Punch Out
             </Button>
             <Button asChild>
@@ -47,7 +47,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               My Attendance
@@ -65,7 +65,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               My Tasks
@@ -83,7 +83,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-1">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200 col-span-1 md:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Team Overview
@@ -101,16 +101,16 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
           <CardDescription>Latest updates and notifications.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>- Task "Design new brochure" marked as Ongoing.</li>
-            <li>- Punched in at 9:03 AM.</li>
-            <li>- New company announcement posted.</li>
+          <ul className="space-y-1 text-sm text-muted-foreground">
+            <li className="p-2 hover:bg-muted rounded-md transition-colors">- Task "Design new brochure" marked as Ongoing.</li>
+            <li className="p-2 hover:bg-muted rounded-md transition-colors">- Punched in at 9:03 AM.</li>
+            <li className="p-2 hover:bg-muted rounded-md transition-colors">- New company announcement posted.</li>
           </ul>
         </CardContent>
       </Card>

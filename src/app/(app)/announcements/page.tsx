@@ -114,7 +114,7 @@ export default function AnnouncementsPage() {
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center p-4 border rounded-lg bg-card">
+      <div className="flex flex-col sm:flex-row gap-4 items-center p-4 border rounded-lg bg-card shadow-md hover:shadow-lg transition-shadow duration-200">
         <div className="relative w-full sm:flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input placeholder="Search announcements..." className="pl-10 w-full" />

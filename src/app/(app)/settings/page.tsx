@@ -37,13 +37,13 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage your application preferences and account settings.</p>
       </div>
 
-      <Card className="shadow-md">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
           <CardTitle className="flex items-center"><Palette className="mr-2 h-5 w-5 text-primary"/> Appearance</CardTitle>
           <CardDescription>Customize the look and feel of the application.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50">
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50 hover:shadow-sm transition-shadow">
             <div>
               <Label htmlFor="theme-select" className="text-base font-medium">Theme</Label>
               <p className="text-sm text-muted-foreground">Select your preferred color scheme.</p>
@@ -75,20 +75,20 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-md">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
           <CardTitle className="flex items-center"><Bell className="mr-2 h-5 w-5 text-primary"/> Notifications</CardTitle>
           <CardDescription>Manage how you receive notifications.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50">
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50 hover:shadow-sm transition-shadow">
             <div>
               <Label htmlFor="email-notifications" className="text-base font-medium">Email Notifications</Label>
               <p className="text-sm text-muted-foreground">Receive important updates via email.</p>
             </div>
             <Switch id="email-notifications" defaultChecked disabled />
           </div>
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50">
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50 hover:shadow-sm transition-shadow">
             <div>
               <Label htmlFor="push-notifications" className="text-base font-medium">Push Notifications</Label>
               <p className="text-sm text-muted-foreground">Get real-time alerts in the app.</p>
@@ -98,13 +98,13 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
       
-      <Card className="shadow-md">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
           <CardTitle className="flex items-center"><UserCog className="mr-2 h-5 w-5 text-primary"/> Account Management</CardTitle>
           <CardDescription>Manage your account settings.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-           <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50">
+           <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50 hover:shadow-sm transition-shadow">
             <div>
               <p className="text-base font-medium">Export Your Data</p>
               <p className="text-sm text-muted-foreground">Download a copy of your account data.</p>
@@ -112,7 +112,7 @@ export default function SettingsPage() {
             <Button variant="outline" disabled>Export Data</Button>
           </div>
           <Separator/>
-          <div className="flex items-center justify-between p-4 border border-destructive/50 rounded-lg bg-destructive/5">
+          <div className="flex items-center justify-between p-4 border border-destructive/50 rounded-lg bg-destructive/5 hover:shadow-sm transition-shadow">
             <div>
               <p className="text-base font-medium text-destructive">Delete Account</p>
               <p className="text-sm text-destructive/80">Permanently delete your account and all associated data. This action cannot be undone.</p>

@@ -38,7 +38,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-1 shadow-md">
+        <Card className="md:col-span-1 shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader className="items-center text-center">
             <Avatar className="h-24 w-24 mb-4 ring-2 ring-primary ring-offset-2 ring-offset-background">
               <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="profile person" />
@@ -54,7 +54,7 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 shadow-md">
+        <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
             <CardDescription>Update your personal details here. (Fields are currently read-only)</CardDescription>
@@ -87,7 +87,7 @@ export default function ProfilePage() {
         </Card>
       </div>
 
-      <Card className="shadow-md">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
           <CardTitle>Security Settings</CardTitle>
           <CardDescription>Manage your account security preferences.</CardDescription>

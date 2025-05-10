@@ -52,7 +52,7 @@ export default function AdminEmployeesPage() {
         </Button>
       </div>
 
-      <Card className="shadow-md">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader className="flex flex-row justify-between items-center">
             <div>
                 <CardTitle>Employee List</CardTitle>

@@ -59,7 +59,7 @@ export default function AdminFinancePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="shadow-md">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader className="flex flex-row justify-between items-center">
             <div>
               <CardTitle className="flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>Salary Payments</CardTitle>
@@ -106,7 +106,7 @@ export default function AdminFinancePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
           <CardHeader className="flex flex-row justify-between items-center">
             <div>
               <CardTitle className="flex items-center"><TrendingDown className="mr-2 h-5 w-5 text-primary"/>Salary Advances</CardTitle>
@@ -158,21 +158,21 @@ export default function AdminFinancePage() {
         </Card>
       </div>
 
-       <Card className="shadow-md">
+       <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
             <CardTitle>Financial Summary</CardTitle>
             <CardDescription>Overview of key financial metrics.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
-            <div className="p-4 border rounded-lg bg-card/50">
+            <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Total Salaries Paid (This Month)</p>
                 <p className="text-2xl font-bold text-foreground">NPR 195,000</p> 
             </div>
-            <div className="p-4 border rounded-lg bg-card/50">
+            <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Total Advances Outstanding</p>
                 <p className="text-2xl font-bold text-foreground">NPR 22,000</p>
             </div>
-             <div className="p-4 border rounded-lg bg-card/50">
+             <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Employees with Advances</p>
                 <p className="text-2xl font-bold text-foreground">3</p>
             </div>
