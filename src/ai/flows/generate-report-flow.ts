@@ -29,7 +29,7 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
 
 const prompt = ai.definePrompt({
   name: 'generateReportCsvPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest', // Changed model
   input: {schema: GenerateReportInputSchema},
   output: {schema: GenerateReportOutputSchema},
   prompt: `You are an administrative assistant tasked with generating placeholder report data in CSV format, suitable for import into Google Sheets.
@@ -90,3 +90,4 @@ const generateReportFlow = ai.defineFlow(
     return output;
   }
 );
+
