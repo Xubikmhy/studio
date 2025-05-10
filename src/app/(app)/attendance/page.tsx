@@ -2,7 +2,7 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, ListFilter, Download } from "lucide-react";
+import { ListFilter, Download } from "lucide-react"; // Removed LogIn, LogOut
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,20 +16,7 @@ const attendanceRecords = [
 export default function AttendancePage() {
   const { toast } = useToast();
 
-  const handlePunchIn = () => {
-    toast({
-      title: "Punch In Successful",
-      description: "Your check-in has been recorded (simulated).",
-    });
-  };
-
-  const handlePunchOut = () => {
-    toast({
-      title: "Punch Out Successful",
-      description: "Your check-out has been recorded (simulated).",
-      variant: "destructive", 
-    });
-  };
+  // Removed handlePunchIn and handlePunchOut functions
 
   const handleFilter = () => {
     toast({
@@ -49,17 +36,10 @@ export default function AttendancePage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Attendance Tracking</h1>
-            <p className="text-muted-foreground">Manage your daily check-ins, check-outs, and view attendance history.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Attendance Log</h1>
+            <p className="text-muted-foreground">View your daily check-ins, check-outs, and attendance history.</p>
         </div>
-        <div className="flex gap-2">
-            <Button variant="default" onClick={handlePunchIn}>
-                <LogIn className="mr-2 h-4 w-4" /> Punch In
-            </Button>
-            <Button variant="destructive" onClick={handlePunchOut}>
-                <LogOut className="mr-2 h-4 w-4" /> Punch Out
-            </Button>
-        </div>
+        {/* Punch In/Out buttons removed from here */}
       </div>
 
       <Card className="shadow-md">
@@ -120,3 +100,4 @@ export default function AttendancePage() {
     </div>
   );
 }
+

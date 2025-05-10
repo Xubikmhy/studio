@@ -1,9 +1,29 @@
+
+"use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Briefcase, Clock, Users2 } from "lucide-react";
+import { PlusCircle, Briefcase, Clock, Users2, LogIn, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 export default function DashboardPage() {
+  const { toast } = useToast(); // Initialize useToast
+
+  const handlePunchIn = () => {
+    toast({
+      title: "Punch In Successful",
+      description: "Your check-in has been recorded (simulated).",
+    });
+  };
+
+  const handlePunchOut = () => {
+    toast({
+      title: "Punch Out Successful",
+      description: "Your check-out has been recorded (simulated).",
+      variant: "destructive",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -12,6 +32,12 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">Welcome back! Here's an overview of your activities.</p>
         </div>
         <div className="flex gap-2">
+            <Button variant="outline" onClick={handlePunchIn}>
+                <LogIn className="mr-2 h-4 w-4" /> Punch In
+            </Button>
+            <Button variant="outline" color="destructive" onClick={handlePunchOut}>
+                <LogOut className="mr-2 h-4 w-4" /> Punch Out
+            </Button>
             <Button asChild>
                 <Link href="/tasks/new">
                     <PlusCircle className="mr-2 h-4 w-4" /> Log New Task
@@ -34,7 +60,7 @@ export default function DashboardPage() {
               Total hours logged today
             </p>
             <Button variant="outline" size="sm" className="mt-4 w-full" asChild>
-              <Link href="/attendance">View Attendance</Link>
+              <Link href="/attendance">View Attendance Log</Link>
             </Button>
           </CardContent>
         </Card>
@@ -91,3 +117,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
