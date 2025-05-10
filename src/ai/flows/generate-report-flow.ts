@@ -8,15 +8,15 @@
  */
 
 import {ai} from '@/ai/ai-instance';
-import {z} from 'genkit';
+import {z} from 'zod'; // Corrected import for Zod
 
-const GenerateReportInputSchema = z.object({
+export const GenerateReportInputSchema = z.object({
   reportType: z.string().describe('The type of report to generate (e.g., "Daily Attendance", "Task Completion - Last 7 Days").'),
   params: z.record(z.string(), z.string()).optional().describe('Additional parameters for the report, like date range or team.'),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
-const GenerateReportOutputSchema = z.object({
+export const GenerateReportOutputSchema = z.object({
   title: z.string().describe('The title of the generated report.'),
   content: z.string().describe('The placeholder content of the generated report.'),
 });
@@ -28,7 +28,7 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
 
 const prompt = ai.definePrompt({
   name: 'generateReportPrompt',
-  model: 'googleai/gemini-1.5-flash-latest', // Added model specification
+  model: 'googleai/gemini-pro', // Changed model to a known valid one
   input: {schema: GenerateReportInputSchema},
   output: {schema: GenerateReportOutputSchema},
   prompt: `You are an administrative assistant tasked with generating placeholder report content.
