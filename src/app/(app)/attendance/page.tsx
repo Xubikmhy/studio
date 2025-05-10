@@ -1,13 +1,15 @@
+
 "use client";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ListFilter, Download, Users } from "lucide-react";
+import { ListFilter, Download, Users, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { CURRENT_USER_DATA } from "@/lib/constants";
 import type { AttendanceRecord } from "@/lib/types";
 import { fetchAttendanceRecords, fetchUserAttendanceRecords } from "@/lib/actions";
+import { arrayToCsv, downloadCsv } from "@/lib/csv-utils";
 
 export default function AttendancePage() {
   const { toast } = useToast();
@@ -15,6 +17,7 @@ export default function AttendancePage() {
   const isAdmin = currentUser.role === 'admin';
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     async function loadAttendance() {
@@ -46,10 +49,44 @@ export default function AttendancePage() {
   };
 
   const handleExport = () => {
-    toast({
-      title: "Export Attendance",
-      description: "Exporting attendance data (simulated). This feature is not yet implemented.",
-    });
+    if (attendanceRecords.length === 0) {
+      toast({
+        title: "No Data to Export",
+        description: "There are no attendance records to export.",
+        variant: "default" 
+      });
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const headers = isAdmin 
+        ? ["Employee Name", "Date", "Check-In", "Check-Out", "Total Hours"]
+        : ["Date", "Check-In", "Check-Out", "Total Hours"];
+      
+      const dataToExport = attendanceRecords.map(record => {
+        return isAdmin
+          ? [record.employeeName, record.date, record.checkIn, record.checkOut, record.totalHours]
+          : [record.date, record.checkIn, record.checkOut, record.totalHours];
+      });
+
+      const csvString = arrayToCsv(headers, dataToExport);
+      const filename = isAdmin ? "company_attendance_log.csv" : "my_attendance_log.csv";
+      downloadCsv(csvString, filename);
+
+      toast({
+        title: "Export Successful",
+        description: `${filename} has been downloaded.`,
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export Failed",
+        description: "An error occurred while exporting attendance data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
   
   if (isLoading) {
@@ -71,7 +108,10 @@ export default function AttendancePage() {
             <CardDescription>Loading attendance data...</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-center py-8">Loading...</p>
+            <div className="py-8 text-center">
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+              <p className="mt-2 text-muted-foreground">Loading attendance...</p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -104,8 +144,9 @@ export default function AttendancePage() {
                 <Button variant="outline" size="sm" onClick={handleFilter}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleExport}>
-                    <Download className="mr-2 h-4 w-4" /> Export
+                <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting}>
+                    {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {isExporting ? "Exporting..." : "Export"}
                 </Button>
             </div>
         </CardHeader>

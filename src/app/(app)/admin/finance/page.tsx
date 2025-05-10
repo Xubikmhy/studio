@@ -2,7 +2,7 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, DollarSign, TrendingDown, ListFilter, Download } from "lucide-react";
+import { PlusCircle, DollarSign, TrendingDown, ListFilter, Download, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { SalaryPayment, SalaryAdvance } from "@/lib/types"; 
@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { fetchSalaryPayments, fetchSalaryAdvances } from "@/lib/actions";
+import { arrayToCsv, downloadCsv } from "@/lib/csv-utils";
 
 
 const getAdvanceStatusVariant = (status: SalaryAdvance['status']) => {
@@ -29,6 +30,8 @@ export default function AdminFinancePage() {
   const [salaryAdvances, setSalaryAdvances] = useState<SalaryAdvance[]>([]);
   const [isLoadingPayments, setIsLoadingPayments] = useState(true);
   const [isLoadingAdvances, setIsLoadingAdvances] = useState(true);
+  const [isExportingPayments, setIsExportingPayments] = useState(false);
+  const [isExportingAdvances, setIsExportingAdvances] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -64,12 +67,44 @@ export default function AdminFinancePage() {
     });
   };
 
-  const handleExport = (type: string) => {
-    toast({
-      title: `Export ${type}`,
-      description: `Exporting ${type.toLowerCase()} (simulated). This feature is not yet implemented.`,
-    });
+  const handleExportPayments = () => {
+    if (salaryPayments.length === 0) {
+      toast({ title: "No Data", description: "No salary payments to export." });
+      return;
+    }
+    setIsExportingPayments(true);
+    try {
+      const headers = ["Employee", "Amount (NPR)", "Payment Date", "Notes"];
+      const data = salaryPayments.map(p => [p.employeeName, p.amount.toString(), p.paymentDate, p.notes]);
+      const csv = arrayToCsv(headers, data);
+      downloadCsv(csv, "salary_payments.csv");
+      toast({ title: "Export Successful", description: "Salary payments exported." });
+    } catch (e) {
+      toast({ title: "Export Failed", description: "Could not export salary payments.", variant: "destructive" });
+    } finally {
+      setIsExportingPayments(false);
+    }
   };
+
+  const handleExportAdvances = () => {
+     if (salaryAdvances.length === 0) {
+      toast({ title: "No Data", description: "No salary advances to export." });
+      return;
+    }
+    setIsExportingAdvances(true);
+    try {
+      const headers = ["Employee", "Amount (NPR)", "Advance Date", "Reason", "Status"];
+      const data = salaryAdvances.map(a => [a.employeeName, a.amount.toString(), a.advanceDate, a.reason, a.status]);
+      const csv = arrayToCsv(headers, data);
+      downloadCsv(csv, "salary_advances.csv");
+      toast({ title: "Export Successful", description: "Salary advances exported." });
+    } catch (e) {
+      toast({ title: "Export Failed", description: "Could not export salary advances.", variant: "destructive" });
+    } finally {
+      setIsExportingAdvances(false);
+    }
+  };
+
 
   const totalSalariesPaidThisMonth = salaryPayments.reduce((sum, p) => sum + p.amount, 0);
   const totalAdvancesOutstanding = salaryAdvances.filter(a => a.status !== 'Repaid').reduce((sum, p) => sum + p.amount, 0);
@@ -100,12 +135,16 @@ export default function AdminFinancePage() {
                 <Button variant="outline" size="sm" onClick={() => handleFilter('Salary Payments')}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleExport('Salary Payments')}>
-                    <Download className="mr-2 h-4 w-4" /> Export
+                <Button variant="outline" size="sm" onClick={handleExportPayments} disabled={isExportingPayments}>
+                    {isExportingPayments ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {isExportingPayments ? "Exporting..." : "Export"}
                 </Button>
             </div>
             {isLoadingPayments ? (
-              <p className="text-muted-foreground text-center py-8">Loading salary payments...</p>
+              <div className="py-8 text-center">
+                <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                <p className="mt-2 text-muted-foreground">Loading salary payments...</p>
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -141,7 +180,7 @@ export default function AdminFinancePage() {
               <CardDescription>Manage and track employee salary advances.</CardDescription>
             </div>
             <Button size="sm" asChild>
-              <Link href="/admin/finance/new-advance"> {/* TODO: Create this page */}
+              <Link href="/admin/finance/new-advance">
                 <PlusCircle className="mr-2 h-4 w-4" /> Record New Advance
               </Link>
             </Button>
@@ -151,12 +190,16 @@ export default function AdminFinancePage() {
                 <Button variant="outline" size="sm" onClick={() => handleFilter('Salary Advances')}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleExport('Salary Advances')}>
-                    <Download className="mr-2 h-4 w-4" /> Export
+                <Button variant="outline" size="sm" onClick={handleExportAdvances} disabled={isExportingAdvances}>
+                    {isExportingAdvances ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {isExportingAdvances ? "Exporting..." : "Export"}
                 </Button>
             </div>
             {isLoadingAdvances ? (
-              <p className="text-muted-foreground text-center py-8">Loading salary advances...</p>
+              <div className="py-8 text-center">
+                <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                <p className="mt-2 text-muted-foreground">Loading salary advances...</p>
+              </div>
             ) : (
               <Table>
                 <TableHeader>

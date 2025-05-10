@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, UserCog, ListFilter, Download, Trash2, UserX } from "lucide-react";
+import { PlusCircle, UserCog, ListFilter, Download, Trash2, UserX, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { arrayToCsv, downloadCsv } from "@/lib/csv-utils";
 
 
 export default function AdminEmployeesPage() {
@@ -30,6 +31,7 @@ export default function AdminEmployeesPage() {
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeProfile | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const loadEmployees = async () => {
     setIsLoading(true);
@@ -59,10 +61,41 @@ export default function AdminEmployeesPage() {
   };
 
   const handleExport = () => {
-    toast({
-      title: "Export Employees",
-      description: "Employee data export functionality is not yet implemented.",
-    });
+    if (employees.length === 0) {
+      toast({
+        title: "No Data to Export",
+        description: "There are no employees to export.",
+      });
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const headers = ["Name", "Email", "Team", "Role", "Base Salary (NPR)"];
+      const dataToExport = employees.map(emp => [
+        emp.name,
+        emp.email,
+        emp.team,
+        emp.roleInternal,
+        emp.baseSalary.toString()
+      ]);
+
+      const csvString = arrayToCsv(headers, dataToExport);
+      downloadCsv(csvString, "employee_list.csv");
+
+      toast({
+        title: "Export Successful",
+        description: "Employee list has been downloaded.",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export Failed",
+        description: "An error occurred while exporting employee data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleEditEmployee = (employeeId: string) => {
@@ -114,7 +147,10 @@ export default function AdminEmployeesPage() {
             <CardDescription>Loading employee data...</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-center py-8">Loading...</p>
+            <div className="py-8 text-center">
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+              <p className="mt-2 text-muted-foreground">Loading employees...</p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -150,8 +186,9 @@ export default function AdminEmployeesPage() {
                   <Button variant="outline" size="sm" onClick={handleFilter}>
                       <ListFilter className="mr-2 h-4 w-4" /> Filter
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleExport}>
-                      <Download className="mr-2 h-4 w-4" /> Export
+                  <Button variant="outline" size="sm" onClick={handleExport} disabled={isExporting}>
+                      {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                      {isExporting ? "Exporting..." : "Export"}
                   </Button>
               </div>
           </CardHeader>
@@ -218,10 +255,6 @@ export default function AdminEmployeesPage() {
                 </AlertDialogFooter>
               </>
             ) : (
-              // This fallback content for AlertDialogContent should ideally not be shown
-              // if the dialog is only opened when employeeToDelete is set.
-              // However, to satisfy Radix UI a11y, a title/desc might be needed.
-              // For a cleaner UX, ensure the dialog is only mounted/rendered when needed.
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
                 <AlertDialogDescription>Preparing to delete an employee...</AlertDialogDescription>
