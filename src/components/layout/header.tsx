@@ -5,7 +5,7 @@ import { UserNav } from "@/components/layout/user-nav";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { APP_NAME } from "@/lib/constants";
-import { Print } from "lucide-react"; // Using Print icon as a logo placeholder
+import { Printer } from "lucide-react"; // Using Printer icon as a logo placeholder
 
 interface HeaderProps extends HTMLAttributes<HTMLDivElement> {}
 
@@ -23,7 +23,7 @@ export function Header({ className, ...props }: HeaderProps) {
       </div>
       <div className="hidden md:flex items-center gap-2">
          <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg text-primary">
-            <Print className="h-6 w-6" />
+            <Printer className="h-6 w-6" />
             <span>{APP_NAME}</span>
           </Link>
       </div>

@@ -13,7 +13,7 @@ import { Header } from "@/components/layout/header";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { APP_NAME } from "@/lib/constants";
 import Link from "next/link";
-import { Print, Settings } from "lucide-react";
+import { Printer, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AppLayout({ children }: PropsWithChildren) {
@@ -22,11 +22,11 @@ export default function AppLayout({ children }: PropsWithChildren) {
       <Sidebar collapsible="icon" className="border-r">
         <SidebarHeader className="p-4 flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg text-primary group-data-[collapsible=icon]:hidden">
-                <Print className="h-6 w-6" />
+                <Printer className="h-6 w-6" />
                 <span>{APP_NAME}</span>
             </Link>
             <Link href="/dashboard" className="items-center gap-2 font-semibold text-lg text-primary hidden group-data-[collapsible=icon]:flex">
-                <Print className="h-6 w-6" />
+                <Printer className="h-6 w-6" />
             </Link>
           <div className="group-data-[collapsible=icon]:hidden">
             <SidebarTrigger />

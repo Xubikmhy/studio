@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
-import { Print, LogIn } from "lucide-react";
+import { Printer, LogIn } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -9,7 +9,7 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-card">
         <Link href="/" className="flex items-center justify-center">
-          <Print className="h-6 w-6 text-primary" />
+          <Printer className="h-6 w-6 text-primary" />
           <span className="ml-2 text-xl font-semibold text-primary">{APP_NAME}</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
