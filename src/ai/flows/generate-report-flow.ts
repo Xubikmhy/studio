@@ -1,6 +1,7 @@
 'use server';
 /**
- * @fileOverview A Genkit flow to generate placeholder report content in CSV format.
+ * @fileOverview A Genkit flow to generate placeholder report content in CSV format,
+ * which can be easily imported into Google Sheets.
  *
  * - generateReport - A function that handles the report generation process.
  * - GenerateReportInput - The input type for the generateReport function.
@@ -10,15 +11,15 @@
 import {ai} from '@/ai/ai-instance';
 import {z} from 'zod';
 
-export const GenerateReportInputSchema = z.object({
+const GenerateReportInputSchema = z.object({
   reportType: z.string().describe('The type of report to generate (e.g., "Daily Attendance", "Task Completion - Last 7 Days").'),
   params: z.record(z.string(), z.string()).optional().describe('Additional parameters for the report, like date range or team.'),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
-export const GenerateReportOutputSchema = z.object({
+const GenerateReportOutputSchema = z.object({
   fileName: z.string().describe('A suitable CSV filename for the report, ending with .csv (e.g., "daily_attendance_report.csv").'),
-  csvContent: z.string().describe('The CSV formatted string content of the report. It must include a header row and 2-3 rows of plausible placeholder data. Ensure proper CSV escaping if commas or quotes are in the data itself.'),
+  csvContent: z.string().describe('The CSV formatted string content of the report. It must include a header row and 2-3 rows of plausible placeholder data. Ensure proper CSV escaping if commas or quotes are in the data itself. This format is compatible with Google Sheets.'),
 });
 export type GenerateReportOutput = z.infer<typeof GenerateReportOutputSchema>;
 
@@ -31,7 +32,7 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-pro',
   input: {schema: GenerateReportInputSchema},
   output: {schema: GenerateReportOutputSchema},
-  prompt: `You are an administrative assistant tasked with generating placeholder report data in CSV format.
+  prompt: `You are an administrative assistant tasked with generating placeholder report data in CSV format, suitable for import into Google Sheets.
 The user has requested a report with the following details:
 Report Type: "{{reportType}}"
 
@@ -49,6 +50,7 @@ Based on this, generate:
    b. Include 2 to 3 rows of plausible, concise placeholder data relevant to the report type and parameters.
    c. Ensure values are properly comma-separated. If a value itself contains a comma, enclose the value in double quotes (e.g., "Value, with comma"). If a value contains a double quote, escape it with another double quote (e.g., "Value with ""quote""").
    d. For any dates in the placeholder data, use a generic YYYY-MM-DD format (e.g., '2023-10-26'). Do not use the current real date unless the report type specifically implies it (e.g., a report for 'today').
+   e. Ensure the generated CSV is plain text and does not include any specific Google Sheets formatting like functions or cell colors, as it's just the data for import.
 
 Example for Report Type "Daily Attendance Report for Computer Team":
 FileName: "daily_attendance_computer_team_2023-10-26.csv"
