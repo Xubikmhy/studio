@@ -37,7 +37,7 @@ export default function HomePage() {
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
                     Efficiently manage employee attendance, daily tasks, and team productivity.
-                    {APP_NAME} offers an intuitive, AI-powered solution tailored for your business.
+                    {APP_NAME} offers an intuitive solution tailored for your business.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -54,7 +54,7 @@ export default function HomePage() {
                 </div>
               </div>
               <Image
-                src="https://picsum.photos/600/400?grayscale"
+                src="https://picsum.photos/600/400?grayscale&blur=1"
                 width="600"
                 height="400"
                 alt="Printing Press Workflow"
@@ -86,8 +86,8 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground">Log tasks, track status, and categorize by team.</p>
               </div>
               <div className="grid gap-1 p-4 rounded-lg border bg-background shadow-sm hover:shadow-md transition-shadow">
-                <h3 className="text-lg font-bold text-primary">AI-Powered Summaries</h3>
-                <p className="text-sm text-muted-foreground">Get insights on task logs and identify bottlenecks.</p>
+                <h3 className="text-lg font-bold text-primary">Company Announcements</h3>
+                <p className="text-sm text-muted-foreground">Stay informed with important company updates and news.</p>
               </div>
               <div className="grid gap-1 p-4 rounded-lg border bg-background shadow-sm hover:shadow-md transition-shadow">
                 <h3 className="text-lg font-bold text-primary">Admin Dashboard</h3>

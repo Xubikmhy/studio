@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, ListChecks, Users, FileText, BotMessageSquare, CalendarClock } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Users, FileText, CalendarClock, Megaphone } from 'lucide-react';
 
 export const APP_NAME = "Gorkhali Offset Press";
 
@@ -28,7 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/attendance", label: "Attendance", icon: CalendarClock },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
-  { href: "/ai-summary", label: "AI Task Summary", icon: BotMessageSquare },
+  { href: "/announcements", label: "Announcements", icon: Megaphone },
   // Admin Section
   { href: "/admin/employees", label: "Employees", icon: Users, adminOnly: true },
   { href: "/admin/reports", label: "Reports", icon: FileText, adminOnly: true },

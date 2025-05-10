@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, ListFilter } from "lucide-react";
-import { AITaskSummarizer } from "@/components/tasks/ai-task-summarizer";
 import Link from "next/link";
 
 // Placeholder Task Data
@@ -25,7 +24,7 @@ export default function TasksPage() {
                 <ListFilter className="mr-2 h-4 w-4" /> Filter Tasks
             </Button>
             <Button asChild>
-                 <Link href="/tasks/new"> {/* Placeholder for actual new task page */}
+                 <Link href="/tasks/new">
                     <PlusCircle className="mr-2 h-4 w-4" /> Log New Task
                 </Link>
             </Button>
@@ -59,10 +58,7 @@ export default function TasksPage() {
         </CardContent>
       </Card>
 
-      {/* AI Task Summarizer Section */}
-      <div className="pt-8">
-         <AITaskSummarizer />
-      </div>
+      {/* Removed AI Task Summarizer Section */}
     </div>
   );
 }
