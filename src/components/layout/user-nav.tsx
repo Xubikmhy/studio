@@ -18,7 +18,7 @@ import Link from "next/link";
 // Placeholder for user data - replace with actual auth data
 const user = {
   name: "Guest User",
-  email: "guest@presstrack.com",
+  email: "guest@gorkhalioffsetpress.com",
   avatar: DEFAULT_USER_IMAGE,
 };
 

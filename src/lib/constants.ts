@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, ListChecks, Users, FileText, BotMessageSquare } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Users, FileText, BotMessageSquare, CalendarClock } from 'lucide-react';
 
-export const APP_NAME = "PressTrack";
+export const APP_NAME = "Gorkhali Offset Press";
 
 export const TEAMS = [
   "Management Team",
@@ -22,7 +22,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/attendance", label: "Attendance", icon: Users /* Placeholder, consider Clock icon */ },
+  { href: "/attendance", label: "Attendance", icon: CalendarClock },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/ai-summary", label: "AI Task Summary", icon: BotMessageSquare },
   // Admin Section

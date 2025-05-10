@@ -10,7 +10,7 @@ import { QueryProvider } from '@/providers/query-provider';
 // The variable assignment will be handled by Tailwind config.
 
 export const metadata: Metadata = {
-  title: 'PressTrack - Employee Management',
+  title: 'Gorkhali Offset Press - Employee Management',
   description: 'Efficiently manage your printing press employees, tasks, and attendance.',
 };
 
