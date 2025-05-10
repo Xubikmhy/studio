@@ -87,8 +87,8 @@ export const ADMIN_USER_DATA: UserProfile = {
 };
 
 // *** SIMULATED CURRENT USER: Change this to ADMIN_USER_DATA to test admin view ***
-export const CURRENT_USER_DATA: UserProfile = EMPLOYEE_USER_DATA;
-// export const CURRENT_USER_DATA: UserProfile = ADMIN_USER_DATA;
+// export const CURRENT_USER_DATA: UserProfile = EMPLOYEE_USER_DATA;
+export const CURRENT_USER_DATA: UserProfile = ADMIN_USER_DATA;
 
 
 // Placeholder Attendance Data - now with employeeId and employeeName
@@ -112,3 +112,4 @@ export const ALL_TASKS: Array<{ id: string; name: string; status: TaskStatus; te
 
 // Urgent Task Icon (example, can be customized)
 export const UrgentTaskIcon = AlertTriangle;
+
