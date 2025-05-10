@@ -4,8 +4,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { useEffect, useActionState } from "react"; // Updated import: useActionState from react
-import { useFormStatus } from "react-dom"; // Kept useFormStatus from react-dom
+import { useEffect, useActionState } from "react"; 
+import { useFormStatus } from "react-dom"; 
 
 import { Button } from "@/components/ui/button";
 import {
@@ -50,7 +50,7 @@ function SubmitButton() {
 }
 
 export default function NewTaskPage() {
-  const [state, formAction] = useActionState(handleCreateTask, initialState); // Updated to useActionState
+  const [state, formAction] = useActionState(handleCreateTask, initialState); 
   const { toast } = useToast();
   const isAdmin = CURRENT_USER_DATA.role === 'admin';
 
@@ -64,12 +64,7 @@ export default function NewTaskPage() {
       status: "To Do",
       priority: "Normal",
     },
-    errors: state?.errors ? Object.entries(state.errors).reduce((acc, [key, value]) => {
-      if (value && value.length > 0) {
-        acc[key as keyof CreateTaskFormValues] = { type: 'manual', message: value.join(', ') };
-      }
-      return acc;
-    }, {} as any) : undefined, 
+    // Errors are now primarily set via form.setError in useEffect
   });
 
   useEffect(() => {
@@ -79,13 +74,14 @@ export default function NewTaskPage() {
         description: state.message,
         variant: state.success ? "default" : "destructive",
       });
-      if (state.success) {
-        form.reset(); 
-        if (isAdmin) {
-          form.reset({ ...form.getValues(), assignedTo: "" });
-        }
-      }
     }
+
+    if (state?.success) {
+      form.reset(); // Resets to defaultValues defined in useForm including isAdmin logic for assignedTo
+    } 
+    
+    // Clear previous errors before setting new ones from action state
+    form.clearErrors(); 
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
         if (fieldErrors && fieldErrors.length > 0) {
@@ -95,11 +91,8 @@ export default function NewTaskPage() {
           });
         }
       });
-    } else if (!state?.success) { 
-        form.clearErrors();
     }
-
-  }, [state, toast, form, isAdmin]);
+  }, [state, toast, form, isAdmin]); // isAdmin is needed if defaultValues in useForm depends on it for reset
 
   return (
     <div className="space-y-6">
@@ -159,7 +152,7 @@ export default function NewTaskPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Team</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a team" />
@@ -219,7 +212,7 @@ export default function NewTaskPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select task status" />
@@ -244,7 +237,7 @@ export default function NewTaskPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Priority</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select task priority" />
@@ -264,7 +257,7 @@ export default function NewTaskPage() {
                   )}
                 />
               </div>
-               {state?.errors?.general && (
+               {state?.errors?.general && ( // General errors can still be displayed if they exist
                 <FormMessage>{state.errors.general.join(", ")}</FormMessage>
               )}
             </CardContent>
