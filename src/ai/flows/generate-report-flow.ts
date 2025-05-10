@@ -28,6 +28,7 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
 
 const prompt = ai.definePrompt({
   name: 'generateReportPrompt',
+  model: 'googleai/gemini-1.5-flash-latest', // Added model specification
   input: {schema: GenerateReportInputSchema},
   output: {schema: GenerateReportOutputSchema},
   prompt: `You are an administrative assistant tasked with generating placeholder report content.
