@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use client";
 
@@ -55,13 +56,14 @@ export default function NewTaskPage() {
   const { toast } = useToast();
   const isAdmin = CURRENT_USER_DATA.role === 'admin';
   const [employeesForSelect, setEmployeesForSelect] = useState<EmployeeProfile[]>([]);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(true);
 
   const form = useForm<CreateTaskFormValues>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
       taskName: "",
       description: "",
-      team: undefined, 
+      team: isAdmin ? undefined : CURRENT_USER_DATA.team, 
       assignedTo: isAdmin ? "" : CURRENT_USER_DATA.name,
       status: "To Do",
       priority: "Normal",
@@ -71,6 +73,7 @@ export default function NewTaskPage() {
   useEffect(() => {
     if (isAdmin) {
       async function loadEmployeesForSelect() {
+        setIsLoadingEmployees(true);
         try {
           const fetchedEmployees = await fetchEmployees();
           setEmployeesForSelect(fetchedEmployees);
@@ -81,9 +84,13 @@ export default function NewTaskPage() {
             description: "Could not load employee list for assignment.",
             variant: "destructive",
           });
+        } finally {
+            setIsLoadingEmployees(false);
         }
       }
       loadEmployeesForSelect();
+    } else {
+        setIsLoadingEmployees(false);
     }
   }, [isAdmin, toast]);
 
@@ -97,7 +104,14 @@ export default function NewTaskPage() {
     }
 
     if (state?.success) {
-      form.reset(); 
+      form.reset({ // Reset with admin-specific defaults if admin
+        taskName: "",
+        description: "",
+        team: isAdmin ? undefined : CURRENT_USER_DATA.team,
+        assignedTo: isAdmin ? "" : CURRENT_USER_DATA.name,
+        status: "To Do",
+        priority: "Normal",
+      }); 
     } 
     
     form.clearErrors(); 
@@ -171,7 +185,12 @@ export default function NewTaskPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Team</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ""} 
+                        defaultValue={field.value || ""}
+                        disabled={!isAdmin && !!CURRENT_USER_DATA.team}
+                       >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a team" />
@@ -204,7 +223,8 @@ export default function NewTaskPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {employeesForSelect.length === 0 && <SelectItem value="" disabled>Loading employees...</SelectItem>}
+                            {isLoadingEmployees && <SelectItem value="loading_placeholder" disabled>Loading employees...</SelectItem>}
+                            {!isLoadingEmployees && employeesForSelect.length === 0 && <SelectItem value="no_employees_placeholder" disabled>No employees found</SelectItem>}
                             {employeesForSelect.map((employee) => (
                               <SelectItem key={employee.id} value={employee.name}>
                                 {employee.name} ({employee.team})

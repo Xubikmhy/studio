@@ -3,7 +3,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { useEffect, useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -29,14 +29,14 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { DatePicker } from "@/components/ui/date-picker"; 
-import { handleLogSalaryPayment, fetchEmployees } from "@/lib/actions";
-import { LogSalaryPaymentSchema, type LogSalaryPaymentState, type LogSalaryPaymentFormValues } from "@/lib/schemas/finance";
+import { DatePicker } from "@/components/ui/date-picker";
+import { handleRecordSalaryAdvance, fetchEmployees } from "@/lib/actions";
+import { RecordSalaryAdvanceSchema, type RecordSalaryAdvanceState, type RecordSalaryAdvanceFormValues } from "@/lib/schemas/finance";
 import type { EmployeeProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, CreditCard } from "lucide-react";
+import { ChevronLeft, TrendingDown } from "lucide-react";
 
-const initialState: LogSalaryPaymentState = {
+const initialState: RecordSalaryAdvanceState = {
   message: null,
   errors: null,
   success: false,
@@ -46,26 +46,27 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Logging Payment..." : "Log Payment"}
-      <CreditCard className="ml-2 h-4 w-4" />
+      {pending ? "Recording Advance..." : "Record Advance"}
+      <TrendingDown className="ml-2 h-4 w-4" />
     </Button>
   );
 }
 
-export default function NewSalaryPaymentPage() {
-  const [state, formAction] = useActionState(handleLogSalaryPayment, initialState);
+export default function NewSalaryAdvancePage() {
+  const [state, formAction] = useActionState(handleRecordSalaryAdvance, initialState);
   const { toast } = useToast();
   const router = useRouter();
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
   const [isLoadingEmployees, setIsLoadingEmployees] = useState(true);
 
-  const form = useForm<LogSalaryPaymentFormValues>({
-    resolver: zodResolver(LogSalaryPaymentSchema),
+
+  const form = useForm<RecordSalaryAdvanceFormValues>({
+    resolver: zodResolver(RecordSalaryAdvanceSchema),
     defaultValues: {
       employeeId: "",
       amount: undefined,
-      paymentDate: undefined,
-      notes: "",
+      advanceDate: undefined,
+      reason: "",
     },
   });
 
@@ -98,14 +99,13 @@ export default function NewSalaryPaymentPage() {
     }
     if (state?.success) {
       form.reset();
-      // Optionally navigate back or refresh the finance page
       // router.push("/admin/finance"); 
     }
     form.clearErrors();
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
         if (fieldErrors && fieldErrors.length > 0) {
-          form.setError(fieldName as keyof LogSalaryPaymentFormValues, {
+          form.setError(fieldName as keyof RecordSalaryAdvanceFormValues, {
             type: 'server',
             message: fieldErrors.join(', '),
           });
@@ -124,8 +124,8 @@ export default function NewSalaryPaymentPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Log New Salary Payment</h1>
-          <p className="text-muted-foreground">Enter the details for the new salary payment record.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Record New Salary Advance</h1>
+          <p className="text-muted-foreground">Enter details for the new salary advance.</p>
         </div>
       </div>
 
@@ -133,8 +133,8 @@ export default function NewSalaryPaymentPage() {
         <Form {...form}>
           <form action={formAction} className="space-y-0">
             <CardHeader>
-              <CardTitle>Payment Details</CardTitle>
-              <CardDescription>Fill in all required payment information.</CardDescription>
+              <CardTitle>Advance Details</CardTitle>
+              <CardDescription>Fill in all required information for the advance.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <FormField
@@ -155,7 +155,7 @@ export default function NewSalaryPaymentPage() {
                             {employee.name} ({employee.team})
                           </SelectItem>
                         ))}
-                         {isLoadingEmployees && (
+                        {isLoadingEmployees && (
                            <SelectItem value="loading_placeholder" disabled>Loading employees...</SelectItem>
                          )}
                          {!isLoadingEmployees && employees.length === 0 && (
@@ -163,7 +163,7 @@ export default function NewSalaryPaymentPage() {
                          )}
                       </SelectContent>
                     </Select>
-                    <FormDescription>The employee receiving the payment.</FormDescription>
+                    <FormDescription>The employee receiving the advance.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -177,7 +177,7 @@ export default function NewSalaryPaymentPage() {
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="e.g., 50000"
+                        placeholder="e.g., 5000"
                         {...field}
                         value={field.value ?? ''}
                         onChange={(event) => {
@@ -186,41 +186,41 @@ export default function NewSalaryPaymentPage() {
                         }}
                       />
                     </FormControl>
-                    <FormDescription>The amount paid to the employee.</FormDescription>
+                    <FormDescription>The amount advanced to the employee.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="paymentDate"
+                name="advanceDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Payment Date</FormLabel>
+                    <FormLabel>Advance Date</FormLabel>
                     <DatePicker
                         date={field.value}
                         onDateChange={field.onChange}
-                        placeholder="Select payment date"
+                        placeholder="Select advance date"
                     />
-                    <FormDescription>The date the payment was made.</FormDescription>
+                    <FormDescription>The date the advance was given.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="notes"
+                name="reason"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
+                    <FormLabel>Reason (Optional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., July Salary, Bonus payment"
+                        placeholder="e.g., Urgent personal need, travel advance"
                         className="resize-y min-h-[80px]"
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>Any additional notes about this payment.</FormDescription>
+                    <FormDescription>Reason for the salary advance.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
