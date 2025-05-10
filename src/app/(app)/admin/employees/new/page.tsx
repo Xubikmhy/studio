@@ -4,8 +4,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { useEffect, useActionState } from "react"; // Updated import: useActionState from react
-import { useFormStatus } from "react-dom"; // Kept useFormStatus from react-dom
+import { useEffect, useActionState } from "react"; 
+import { useFormStatus } from "react-dom"; 
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,7 +49,7 @@ function SubmitButton() {
 }
 
 export default function NewEmployeePage() {
-  const [state, formAction] = useActionState(handleCreateEmployee, initialState); // Updated to useActionState
+  const [state, formAction] = useActionState(handleCreateEmployee, initialState); 
   const { toast } = useToast();
 
   const form = useForm<CreateEmployeeFormValues>({
@@ -59,7 +59,7 @@ export default function NewEmployeePage() {
       email: "",
       team: undefined, 
       roleInternal: "",
-      baseSalary: undefined, 
+      baseSalary: undefined, // Keep as undefined, input value handling will manage control state
     },
     errors: state?.errors ? Object.entries(state.errors).reduce((acc, [key, value]) => {
       if (value && value.length > 0) {
@@ -194,7 +194,22 @@ export default function NewEmployeePage() {
                   <FormItem>
                     <FormLabel>Base Salary (NPR)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g., 50000" {...field} onChange={event => field.onChange(+event.target.value)} />
+                      <Input
+                        type="number"
+                        placeholder="e.g., 50000"
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        ref={field.ref}
+                        value={field.value ?? ''} // Ensure controlled: map undefined/null to empty string
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          // For react-hook-form state:
+                          // - Empty input becomes undefined (Zod coerce to NaN, then .positive() fails)
+                          // - Numeric string "123" becomes number 123
+                          // - Non-numeric string "abc" becomes NaN
+                          field.onChange(value === '' ? undefined : +value);
+                        }}
+                      />
                     </FormControl>
                     <FormDescription>The employee's monthly base salary in NPR.</FormDescription>
                     <FormMessage />
