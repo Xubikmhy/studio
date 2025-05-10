@@ -106,7 +106,8 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans; /* Use Tailwind's font-sans which should be Geist */
+    @apply bg-background text-foreground; 
+    /* font-sans is applied via tailwind.config.ts and CSS variables on html tag */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
