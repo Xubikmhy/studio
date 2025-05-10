@@ -1,3 +1,5 @@
+
+"use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, ListFilter } from "lucide-react";
@@ -20,7 +22,7 @@ export default function TasksPage() {
           <p className="text-muted-foreground">Log, track, and manage all your team's tasks efficiently.</p>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => console.log('Filter Tasks clicked')}>
                 <ListFilter className="mr-2 h-4 w-4" /> Filter Tasks
             </Button>
             <Button asChild>

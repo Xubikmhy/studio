@@ -1,9 +1,12 @@
+
+"use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, UserCog, ListFilter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { EMPLOYEES_SAMPLE } from "@/lib/constants";
+import Link from "next/link";
 
 // Use employee data from constants
 const employees = EMPLOYEES_SAMPLE;
@@ -16,8 +19,10 @@ export default function AdminEmployeesPage() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Manage Employees</h1>
             <p className="text-muted-foreground">Add, edit, or remove employee profiles.</p>
         </div>
-        <Button> {/* Link to add employee page */}
+        <Button asChild>
+          <Link href="/admin/employees/new">
             <PlusCircle className="mr-2 h-4 w-4" /> Add New Employee
+          </Link>
         </Button>
       </div>
 
@@ -28,10 +33,10 @@ export default function AdminEmployeesPage() {
                 <CardDescription>All registered employees in the system.</CardDescription>
             </div>
              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => console.log('Filter employees clicked')}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => console.log('Export employees clicked')}>
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>
@@ -57,7 +62,7 @@ export default function AdminEmployeesPage() {
                   <TableCell>{employee.role}</TableCell>
                   <TableCell>{employee.baseSalary.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => console.log(`Edit employee ${employee.id} clicked`)}>
                       <UserCog className="h-4 w-4" />
                       <span className="sr-only">Edit Employee</span>
                     </Button>

@@ -1,9 +1,12 @@
+
+"use client";
 import AnnouncementCard, { type Announcement } from "@/components/announcements/announcement-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { APP_NAME } from "@/lib/constants";
-import { PlusCircle, Search, Filter } from "lucide-react";
+import { PlusCircle, Search, Filter, Speaker } from "lucide-react"; // Added Speaker
+import Link from 'next/link';
 
 // Placeholder data - in a real app, this would come from an API
 const announcementsData: Announcement[] = [
@@ -94,8 +97,10 @@ export default function AnnouncementsPage() {
           <p className="text-muted-foreground mt-1">Stay informed with the latest news, updates, and internal communications.</p>
         </div>
         {isAdmin && (
-          <Button size="lg" className="shrink-0">
-            <PlusCircle className="mr-2 h-5 w-5" /> Create New Announcement
+          <Button size="lg" className="shrink-0" asChild>
+            <Link href="/announcements/new">
+              <PlusCircle className="mr-2 h-5 w-5" /> Create New Announcement
+            </Link>
           </Button>
         )}
       </div>
@@ -117,7 +122,7 @@ export default function AnnouncementsPage() {
                 ))}
             </SelectContent>
             </Select>
-            <Button variant="outline" className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => console.log('Apply filter clicked')}>
                 <Filter className="mr-2 h-4 w-4" /> Apply
             </Button>
         </div>
@@ -131,12 +136,14 @@ export default function AnnouncementsPage() {
         </div>
       ) : (
         <div className="text-center py-16">
-          <Megaphone className="mx-auto h-16 w-16 text-muted-foreground/50" />
+          <Speaker className="mx-auto h-16 w-16 text-muted-foreground/50" /> {/* Replaced Megaphone with Speaker */}
           <h2 className="text-2xl font-semibold text-muted-foreground mt-6">No Announcements Found</h2>
           <p className="text-muted-foreground mt-2">It's quiet here... Check back later for new updates or try adjusting your filters.</p>
           {isAdmin && (
-             <Button size="lg" className="mt-8">
-                <PlusCircle className="mr-2 h-5 w-5" /> Post First Announcement
+             <Button size="lg" className="mt-8" asChild>
+                <Link href="/announcements/new">
+                  <PlusCircle className="mr-2 h-5 w-5" /> Post First Announcement
+                </Link>
             </Button>
           )}
         </div>

@@ -1,9 +1,12 @@
+
+"use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, DollarSign, TrendingDown, ListFilter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { EMPLOYEES_SAMPLE } from "@/lib/constants";
+import Link from "next/link";
 
 // Placeholder Salary Payment Data
 const salaryPayments = [
@@ -45,16 +48,18 @@ export default function AdminFinancePage() {
               <CardTitle className="flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>Salary Payments</CardTitle>
               <CardDescription>Log and track employee salary payments.</CardDescription>
             </div>
-            <Button size="sm">
-              <PlusCircle className="mr-2 h-4 w-4" /> Log New Payment
+            <Button size="sm" asChild>
+              <Link href="/admin/finance/new-payment">
+                <PlusCircle className="mr-2 h-4 w-4" /> Log New Payment
+              </Link>
             </Button>
           </CardHeader>
           <CardContent>
             <div className="flex justify-end gap-2 mb-4">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => console.log('Filter salary payments clicked')}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => console.log('Export salary payments clicked')}>
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>
@@ -90,16 +95,18 @@ export default function AdminFinancePage() {
               <CardTitle className="flex items-center"><TrendingDown className="mr-2 h-5 w-5 text-primary"/>Salary Advances</CardTitle>
               <CardDescription>Manage and track employee salary advances.</CardDescription>
             </div>
-            <Button size="sm">
-              <PlusCircle className="mr-2 h-4 w-4" /> Record New Advance
+            <Button size="sm" asChild>
+              <Link href="/admin/finance/new-advance">
+                <PlusCircle className="mr-2 h-4 w-4" /> Record New Advance
+              </Link>
             </Button>
           </CardHeader>
           <CardContent>
              <div className="flex justify-end gap-2 mb-4">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => console.log('Filter salary advances clicked')}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => console.log('Export salary advances clicked')}>
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>

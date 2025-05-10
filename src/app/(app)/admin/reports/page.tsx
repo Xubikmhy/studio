@@ -1,3 +1,5 @@
+
+"use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, CalendarDays, Users } from "lucide-react";
@@ -29,7 +31,7 @@ export default function AdminReportsPage() {
                 <SelectItem value="monthly">Monthly Attendance</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="w-full">
+            <Button className="w-full" onClick={() => console.log('Generate Attendance Report clicked')}>
               <Download className="mr-2 h-4 w-4" /> Generate Report
             </Button>
           </CardContent>
@@ -52,7 +54,7 @@ export default function AdminReportsPage() {
                 <SelectItem value="custom">Custom Range</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="w-full">
+            <Button className="w-full" onClick={() => console.log('Generate Task Completion Report clicked')}>
               <Download className="mr-2 h-4 w-4" /> Generate Report
             </Button>
           </CardContent>
@@ -76,7 +78,7 @@ export default function AdminReportsPage() {
                 <SelectItem value="printing">Printing Team</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="w-full">
+            <Button className="w-full" onClick={() => console.log('Generate Team Productivity Report clicked')}>
               <Download className="mr-2 h-4 w-4" /> Generate Report
             </Button>
           </CardContent>

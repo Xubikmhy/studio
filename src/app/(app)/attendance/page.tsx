@@ -1,3 +1,5 @@
+
+"use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, ListFilter, Download } from "lucide-react";
@@ -19,10 +21,10 @@ export default function AttendancePage() {
             <p className="text-muted-foreground">Manage your daily check-ins, check-outs, and view attendance history.</p>
         </div>
         <div className="flex gap-2">
-            <Button variant="default"> {/* Changed from custom green to default (primary) */}
+            <Button variant="default" onClick={() => console.log('Punch In clicked')}>
                 <LogIn className="mr-2 h-4 w-4" /> Punch In
             </Button>
-            <Button variant="destructive">
+            <Button variant="destructive" onClick={() => console.log('Punch Out clicked')}>
                 <LogOut className="mr-2 h-4 w-4" /> Punch Out
             </Button>
         </div>
@@ -35,10 +37,10 @@ export default function AttendancePage() {
                 <CardDescription>Your recent attendance records.</CardDescription>
             </div>
             <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => console.log('Filter attendance clicked')}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => console.log('Export attendance clicked')}>
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>

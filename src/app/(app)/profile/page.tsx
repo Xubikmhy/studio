@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use client";
 
@@ -38,7 +39,7 @@ export default function ProfilePage() {
             <CardDescription>{user.role} - {user.team}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={() => console.log('Change Profile Picture clicked')}>
               <Edit3 className="mr-2 h-4 w-4" /> Change Profile Picture
             </Button>
           </CardContent>
