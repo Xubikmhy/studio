@@ -8,16 +8,16 @@
  * - GenerateReportOutput - The return type for the generateReport function (CSV content and filename).
  */
 
-import {ai} from '@/ai/ai-instance';
+import {ai} from '@/ai/ai-instance'; // Corrected path
 import {z} from 'zod';
 
-const GenerateReportInputSchema = z.object({
+export const GenerateReportInputSchema = z.object({
   reportType: z.string().describe('The type of report to generate (e.g., "Daily Attendance", "Task Completion - Last 7 Days").'),
   params: z.record(z.string(), z.string()).optional().describe('Additional parameters for the report, like date range or team.'),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
-const GenerateReportOutputSchema = z.object({
+export const GenerateReportOutputSchema = z.object({
   fileName: z.string().describe('A suitable CSV filename for the report, ending with .csv (e.g., "daily_attendance_report.csv").'),
   csvContent: z.string().describe('The CSV formatted string content of the report. It must include a header row and 2-3 rows of plausible placeholder data. Ensure proper CSV escaping if commas or quotes are in the data itself. This format is compatible with Google Sheets.'),
 });
@@ -29,7 +29,7 @@ export async function generateReport(input: GenerateReportInput): Promise<Genera
 
 const prompt = ai.definePrompt({
   name: 'generateReportCsvPrompt',
-  model: 'googleai/gemini-pro',
+  model: 'googleai/gemini-1.5-flash-latest', // Updated model
   input: {schema: GenerateReportInputSchema},
   output: {schema: GenerateReportOutputSchema},
   prompt: `You are an administrative assistant tasked with generating placeholder report data in CSV format, suitable for import into Google Sheets.
@@ -90,3 +90,4 @@ const generateReportFlow = ai.defineFlow(
     return output;
   }
 );
+
