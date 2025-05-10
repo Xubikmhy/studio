@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Briefcase, Clock } from "lucide-react";
+import { PlusCircle, Briefcase, Clock, Users2 } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -13,7 +13,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex gap-2">
             <Button asChild>
-                <Link href="/tasks/new"> {/* Assuming a route to create new task */}
+                <Link href="/tasks/new">
                     <PlusCircle className="mr-2 h-4 w-4" /> Log New Task
                 </Link>
             </Button>
@@ -60,20 +60,21 @@ export default function DashboardPage() {
         <Card className="shadow-lg hover:shadow-xl transition-shadow col-span-1 md:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Team Overview (Placeholder)
+              Team Overview
             </CardTitle>
-             {/* Icon for Team */}
+             <Users2 className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              Summary of team activities and productivity will be shown here.
+            <p className="text-muted-foreground text-sm">
+              Quick summary of team activities and productivity metrics will appear here.
             </p>
-            {/* More detailed team stats or links can be added */}
+            <Button variant="outline" size="sm" className="mt-4 w-full" disabled> 
+              View Team Details
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Placeholder for recent activity or important notifications */}
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>

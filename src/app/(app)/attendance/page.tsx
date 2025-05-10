@@ -19,7 +19,7 @@ export default function AttendancePage() {
             <p className="text-muted-foreground">Manage your daily check-ins, check-outs, and view attendance history.</p>
         </div>
         <div className="flex gap-2">
-            <Button variant="success" className="bg-green-600 hover:bg-green-700 text-white"> {/* Custom success variant or use primary */}
+            <Button variant="default"> {/* Changed from custom green to default (primary) */}
                 <LogIn className="mr-2 h-4 w-4" /> Punch In
             </Button>
             <Button variant="destructive">

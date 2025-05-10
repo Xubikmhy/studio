@@ -13,6 +13,10 @@ export const TEAMS = [
 
 export type Team = typeof TEAMS[number];
 
+export const TASK_STATUSES = ["To Do", "Ongoing", "Blocked", "Finished"] as const;
+export type TaskStatus = typeof TASK_STATUSES[number];
+
+
 export interface NavItem {
   href: string;
   label: string;
@@ -31,3 +35,12 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const DEFAULT_USER_IMAGE = "https://picsum.photos/100/100";
+
+// Placeholder for user data - can be expanded for profile page
+export const DEFAULT_USER_DATA = {
+  name: "Guest User",
+  email: "guest@gorkhalioffsetpress.com",
+  avatar: DEFAULT_USER_IMAGE,
+  team: TEAMS[0], // Example team
+  role: "Employee", // Example role
+};
