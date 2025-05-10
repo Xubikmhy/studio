@@ -28,6 +28,9 @@
     --destructive: 0 75% 55%; /* A clear, standard red */
     --destructive-foreground: 0 0% 100%; /* White text on destructive */
 
+    --success: 145 63% 42%; /* A pleasant green */
+    --success-foreground: 0 0% 100%; /* White text on success */
+
     --border: 220 20% 90%; /* Subtle border, slightly darker than background */
     --input: 220 20% 96%; /* Input background, very light and clean */
     --ring: 220 70% 55%; /* Primary blue for focus rings for consistency */
@@ -76,6 +79,9 @@
 
     --destructive: 0 70% 60%; /* Slightly lighter red for dark mode */
     --destructive-foreground: 0 0% 100%;
+
+    --success: 145 60% 50%; /* Slightly lighter green for dark mode */
+    --success-foreground: 0 0% 0%; /* Dark text for light green */
 
     --border: 224 20% 28%; /* Dark border */
     --input: 224 20% 24%; /* Dark input background */

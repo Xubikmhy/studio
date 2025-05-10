@@ -3,15 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Briefcase, Clock, Users2, LogIn, LogOut } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast"; // Import useToast
+import { useToast } from "@/hooks/use-toast"; 
 
 export default function DashboardPage() {
-  const { toast } = useToast(); // Initialize useToast
+  const { toast } = useToast(); 
 
   const handlePunchIn = () => {
     toast({
       title: "Punch In Successful",
       description: "Your check-in has been recorded (simulated).",
+      variant: "default", // Or remove variant for default styling
     });
   };
 
@@ -19,7 +20,7 @@ export default function DashboardPage() {
     toast({
       title: "Punch Out Successful",
       description: "Your check-out has been recorded (simulated).",
-      variant: "destructive", // This implies a destructive action, which might not be ideal. Consider 'default' or a custom variant.
+      variant: "default", // Changed from destructive for the toast, button color handles the visual cue
     });
   };
 
@@ -31,7 +32,6 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">Welcome back! Here's an overview of your activities.</p>
         </div>
         <div className="flex gap-2">
-            {/* Punch In/Out buttons moved to My Attendance card */}
             <Button asChild>
                 <Link href="/tasks/new">
                     <PlusCircle className="mr-2 h-4 w-4" /> Log New Task
@@ -55,10 +55,10 @@ export default function DashboardPage() {
             </p>
             
             <div className="mt-4 flex gap-2">
-              <Button variant="outline" onClick={handlePunchIn} className="flex-1">
+              <Button variant="success" onClick={handlePunchIn} className="flex-1">
                 <LogIn className="mr-2 h-4 w-4" /> Punch In
               </Button>
-              <Button variant="outline" onClick={handlePunchOut} className="flex-1">
+              <Button variant="destructive" onClick={handlePunchOut} className="flex-1">
                 <LogOut className="mr-2 h-4 w-4" /> Punch Out
               </Button>
             </div>
