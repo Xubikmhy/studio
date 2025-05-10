@@ -7,16 +7,16 @@
  * - GenerateReportOutput - The return type for the generateReport function.
  */
 
-import {ai} from '@/ai/ai-instance'; // Corrected path
-import {z} from 'genkit'; // Corrected import for Zod
+import {ai} from '@/ai/ai-instance';
+import {z} from 'genkit';
 
-export const GenerateReportInputSchema = z.object({
+const GenerateReportInputSchema = z.object({
   reportType: z.string().describe('The type of report to generate (e.g., "Daily Attendance", "Task Completion - Last 7 Days").'),
   params: z.record(z.string(), z.string()).optional().describe('Additional parameters for the report, like date range or team.'),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
-export const GenerateReportOutputSchema = z.object({
+const GenerateReportOutputSchema = z.object({
   title: z.string().describe('The title of the generated report.'),
   content: z.string().describe('The placeholder content of the generated report.'),
 });
