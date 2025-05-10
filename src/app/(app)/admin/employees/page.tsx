@@ -3,15 +3,10 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, UserCog, ListFilter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { TEAMS } from "@/lib/constants";
+import { EMPLOYEES_SAMPLE } from "@/lib/constants";
 
-// Placeholder Employee Data
-const employees = [
-  { id: "1", name: "Alice Wonderland", email: "alice@example.com", team: TEAMS[1], role: "Designer" },
-  { id: "2", name: "Bob The Builder", email: "bob@example.com", team: TEAMS[2], role: "Printer Operator" },
-  { id: "3", name: "Charlie Brown", email: "charlie@example.com", team: TEAMS[4], role: "Account Manager" },
-  { id: "4", name: "Diana Prince", email: "diana@example.com", team: TEAMS[0], role: "Manager" },
-];
+// Use employee data from constants
+const employees = EMPLOYEES_SAMPLE;
 
 export default function AdminEmployeesPage() {
   return (
@@ -49,6 +44,7 @@ export default function AdminEmployeesPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Team</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Base Salary (NPR)</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -59,6 +55,7 @@ export default function AdminEmployeesPage() {
                   <TableCell>{employee.email}</TableCell>
                   <TableCell><Badge variant="secondary">{employee.team}</Badge></TableCell>
                   <TableCell>{employee.role}</TableCell>
+                  <TableCell>{employee.baseSalary.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon">
                       <UserCog className="h-4 w-4" />

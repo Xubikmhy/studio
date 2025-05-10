@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, ListChecks, Users, FileText, CalendarClock, Megaphone } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Users, FileText, CalendarClock, Megaphone, Landmark } from 'lucide-react';
 
 export const APP_NAME = "Gorkhali Offset Press";
 
@@ -31,6 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/announcements", label: "Announcements", icon: Megaphone },
   // Admin Section
   { href: "/admin/employees", label: "Employees", icon: Users, adminOnly: true },
+  { href: "/admin/finance", label: "Finance", icon: Landmark, adminOnly: true },
   { href: "/admin/reports", label: "Reports", icon: FileText, adminOnly: true },
 ];
 
@@ -43,4 +44,12 @@ export const DEFAULT_USER_DATA = {
   avatar: DEFAULT_USER_IMAGE,
   team: TEAMS[0], // Example team
   role: "Employee", // Example role
+  baseSalary: 50000, // Example base salary
 };
+
+export const EMPLOYEES_SAMPLE = [
+  { id: "1", name: "Alice Wonderland", email: "alice@example.com", team: TEAMS[1], role: "Designer", baseSalary: 60000 },
+  { id: "2", name: "Bob The Builder", email: "bob@example.com", team: TEAMS[2], role: "Printer Operator", baseSalary: 55000 },
+  { id: "3", name: "Charlie Brown", email: "charlie@example.com", team: TEAMS[4], role: "Account Manager", baseSalary: 65000 },
+  { id: "4", name: "Diana Prince", email: "diana@example.com", team: TEAMS[0], role: "Manager", baseSalary: 80000 },
+];
