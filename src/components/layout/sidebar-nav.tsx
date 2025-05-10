@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { NAV_ITEMS, type NavItem } from "@/lib/constants";
+import { NAV_ITEMS, type NavItem, CURRENT_USER_DATA } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-
-// Placeholder for admin status - replace with actual role check
-const isAdmin = true; 
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const isAdmin = CURRENT_USER_DATA.role === 'admin';
 
   const filteredNavItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
 

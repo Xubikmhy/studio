@@ -8,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { DEFAULT_USER_DATA } from "@/lib/constants"; // Using expanded user data
-import { Edit3, KeyRound, ShieldCheck } from "lucide-react";
+import { CURRENT_USER_DATA } from "@/lib/constants"; 
+import { Edit3, KeyRound, ShieldCheck, Briefcase } from "lucide-react"; // Added Briefcase
 import { useToast } from "@/hooks/use-toast";
 
-// In a real app, this would come from authentication context or API
-const user = DEFAULT_USER_DATA;
+// Use current user data from constants
+const user = CURRENT_USER_DATA;
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -45,7 +45,11 @@ export default function ProfilePage() {
               <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
             </Avatar>
             <CardTitle className="text-2xl">{user.name}</CardTitle>
-            <CardDescription>{user.role} - {user.team}</CardDescription>
+            <CardDescription className="flex items-center justify-center gap-1">
+                <Briefcase className="h-4 w-4 text-muted-foreground" /> 
+                {/* Displaying the internal role from EMPLOYEES_SAMPLE if exists, or app role */}
+                {CURRENT_USER_DATA.roleInternal || user.role} - {user.team} 
+            </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <Button variant="outline" className="w-full" onClick={handleChangeProfilePicture}>
@@ -71,15 +75,19 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                     <Label htmlFor="role">Role</Label>
-                    <Input id="role" defaultValue={user.role} readOnly />
+                    <Input id="role" defaultValue={CURRENT_USER_DATA.roleInternal || user.role} readOnly />
                 </div>
                  <div className="space-y-1">
                     <Label htmlFor="team">Team</Label>
                     <Input id="team" defaultValue={user.team} readOnly />
                 </div>
             </div>
+             <div className="space-y-1">
+                <Label htmlFor="baseSalary">Base Salary (NPR)</Label>
+                <Input id="baseSalary" defaultValue={user.baseSalary.toLocaleString()} readOnly />
+            </div>
             <div className="pt-2">
-                 <Button disabled> {/* This button would trigger an edit mode or form */}
+                 <Button disabled> 
                     <Edit3 className="mr-2 h-4 w-4" /> Edit Information
                 </Button>
             </div>

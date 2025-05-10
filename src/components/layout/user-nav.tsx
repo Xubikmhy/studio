@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use client";
 
@@ -12,14 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DEFAULT_USER_DATA } from "@/lib/constants";
+import { CURRENT_USER_DATA } from "@/lib/constants";
 import { LogOut, Settings, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
-// Using user data from constants
-const user = DEFAULT_USER_DATA;
+// Using current user data from constants
+const user = CURRENT_USER_DATA;
 
 export function UserNav() {
   const router = useRouter();

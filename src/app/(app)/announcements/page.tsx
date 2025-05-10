@@ -4,8 +4,8 @@ import AnnouncementCard, { type Announcement } from "@/components/announcements/
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { APP_NAME } from "@/lib/constants";
-import { PlusCircle, Search, Filter, Speaker } from "lucide-react"; // Added Speaker
+import { APP_NAME, CURRENT_USER_DATA } from "@/lib/constants";
+import { PlusCircle, Search, Filter, Speaker } from "lucide-react"; 
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
 
@@ -81,8 +81,7 @@ The ${APP_NAME} Team`,
   },
 ];
 
-// Placeholder for admin status - in a real app, this would come from user auth
-const isAdmin = true; 
+const isAdmin = CURRENT_USER_DATA.role === 'admin';
 const uniqueCategories = Array.from(new Set(announcementsData.map(a => a.category).filter(Boolean)));
 
 
@@ -145,7 +144,7 @@ export default function AnnouncementsPage() {
         </div>
       ) : (
         <div className="text-center py-16">
-          <Speaker className="mx-auto h-16 w-16 text-muted-foreground/50" /> {/* Replaced Megaphone with Speaker */}
+          <Speaker className="mx-auto h-16 w-16 text-muted-foreground/50" />
           <h2 className="text-2xl font-semibold text-muted-foreground mt-6">No Announcements Found</h2>
           <p className="text-muted-foreground mt-2">It's quiet here... Check back later for new updates or try adjusting your filters.</p>
           {isAdmin && (

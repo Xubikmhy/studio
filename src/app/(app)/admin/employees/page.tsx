@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, UserCog, ListFilter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { EMPLOYEES_SAMPLE } from "@/lib/constants";
+import { EMPLOYEES_SAMPLE } from "@/lib/constants"; // Updated import
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
@@ -74,7 +74,7 @@ export default function AdminEmployeesPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Team</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>Role</TableHead> {/* Using the 'role' field which now corresponds to 'roleInternal' */}
                 <TableHead>Base Salary (NPR)</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -85,7 +85,7 @@ export default function AdminEmployeesPage() {
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>{employee.email}</TableCell>
                   <TableCell><Badge variant="secondary">{employee.team}</Badge></TableCell>
-                  <TableCell>{employee.role}</TableCell>
+                  <TableCell>{employee.role}</TableCell> {/* Displaying the job title/role */}
                   <TableCell>{employee.baseSalary.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => handleEditEmployee(employee.id)}>
