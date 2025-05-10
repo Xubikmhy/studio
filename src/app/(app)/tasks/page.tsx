@@ -3,11 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { PlusCircle, ListFilter } from "lucide-react";
+import { PlusCircle, ListFilter, AlertTriangle } from "lucide-react"; // Added AlertTriangle for urgent tasks
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import type { TaskStatus } from "@/lib/constants";
-import { CURRENT_USER_DATA, ALL_TASKS } from "@/lib/constants";
+import type { TaskStatus, TaskPriority } from "@/lib/constants"; // Added TaskPriority
+import { CURRENT_USER_DATA, ALL_TASKS, UrgentTaskIcon } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 const getTaskStatusVariant = (status: TaskStatus): BadgeProps['variant'] => {
   switch (status) {
@@ -74,15 +75,31 @@ export default function TasksPage() {
           {tasks.length > 0 ? (
             <ul className="space-y-3">
               {tasks.map(task => (
-                <li key={task.id} className="flex flex-col sm:flex-row justify-between sm:items-center p-3 bg-background rounded-md border hover:shadow-sm transition-shadow duration-150 gap-2 sm:gap-4">
+                <li 
+                  key={task.id} 
+                  className={cn(
+                    "flex flex-col sm:flex-row justify-between sm:items-center p-3 bg-card rounded-md border hover:shadow-sm transition-shadow duration-150 gap-3 sm:gap-4",
+                    task.priority === "Urgent" && "border-destructive/70 ring-1 ring-destructive/30"
+                  )}
+                >
                   <div className="flex-grow">
-                    <p className="font-medium text-foreground">{task.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      {task.priority === "Urgent" && (
+                        <UrgentTaskIcon className="h-5 w-5 text-destructive shrink-0" />
+                      )}
+                      <p className="font-medium text-foreground">{task.name}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 pl-1">
                       Team: {task.team}
                       {isAdmin && ` - Assigned to: ${task.assignedTo}`}
                     </p>
                   </div>
-                  <Badge variant={getTaskStatusVariant(task.status)} className="self-start sm:self-center">{task.status}</Badge>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 self-start sm:self-center">
+                     {task.priority === "Urgent" && (
+                        <Badge variant="destructive" className="text-xs hidden sm:inline-flex">Urgent</Badge>
+                     )}
+                    <Badge variant={getTaskStatusVariant(task.status)} className="text-xs">{task.status}</Badge>
+                  </div>
                 </li>
               ))}
             </ul>

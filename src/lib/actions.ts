@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use server";
 
-import { CreateTaskSchema, type CreateTaskState } from "@/lib/schemas/task"; // Import from new location
+import { CreateTaskSchema, type CreateTaskState } from "@/lib/schemas/task"; 
 
 export async function handleCreateTask(
   prevState: CreateTaskState,
@@ -13,6 +13,7 @@ export async function handleCreateTask(
     team: formData.get("team"),
     assignedTo: formData.get("assignedTo"),
     status: formData.get("status"),
+    priority: formData.get("priority"),
   });
 
   if (!validatedFields.success) {

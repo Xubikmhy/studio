@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, ListChecks, Users, FileText, CalendarClock, Megaphone, Landmark } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Users, FileText, CalendarClock, Megaphone, Landmark, AlertTriangle } from 'lucide-react';
 
 export const APP_NAME = "Gorkhali Offset Press";
 
@@ -16,6 +16,9 @@ export type Team = typeof TEAMS[number];
 export const TASK_STATUSES = ["To Do", "Ongoing", "Blocked", "Finished"] as const;
 export type TaskStatus = typeof TASK_STATUSES[number];
 
+export const TASK_PRIORITIES = ["Normal", "Urgent"] as const;
+export type TaskPriority = typeof TASK_PRIORITIES[number];
+
 export type UserRole = 'admin' | 'employee';
 
 export interface UserProfile {
@@ -26,6 +29,7 @@ export interface UserProfile {
   team: Team;
   role: UserRole;
   baseSalary: number;
+  roleInternal?: string; // Added for consistency with EMPLOYEES_SAMPLE
 }
 
 export interface NavItem {
@@ -68,6 +72,7 @@ export const EMPLOYEE_USER_DATA: UserProfile = {
   team: EMPLOYEES_SAMPLE[0].team,
   role: 'employee', // App role
   baseSalary: EMPLOYEES_SAMPLE[0].baseSalary,
+  roleInternal: EMPLOYEES_SAMPLE[0].roleInternal,
 };
 
 export const ADMIN_USER_DATA: UserProfile = {
@@ -78,6 +83,7 @@ export const ADMIN_USER_DATA: UserProfile = {
   team: EMPLOYEES_SAMPLE[3].team,
   role: 'admin', // App role
   baseSalary: EMPLOYEES_SAMPLE[3].baseSalary,
+  roleInternal: EMPLOYEES_SAMPLE[3].roleInternal,
 };
 
 // *** SIMULATED CURRENT USER: Change this to ADMIN_USER_DATA to test admin view ***
@@ -94,12 +100,15 @@ export const ALL_ATTENDANCE_RECORDS = [
 ];
 
 // Placeholder Task Data
-export const ALL_TASKS: Array<{ id: string; name: string; status: TaskStatus; team: Team; assignedTo: string }> = [
-  { id: "1", name: "Design new brochure", status: "Ongoing", team: "Computer Team", assignedTo: EMPLOYEES_SAMPLE[0].name }, // Alice
-  { id: "2", name: "Print 1000 flyers", status: "Finished", team: "Printing Team", assignedTo: EMPLOYEES_SAMPLE[1].name }, // Bob
-  { id: "3", name: "Client meeting for new campaign", status: "Finished", team: "Marketing & Accounts Team", assignedTo: EMPLOYEES_SAMPLE[2].name }, // Charlie
-  { id: "4", name: "Update website homepage content", status: "Ongoing", team: "Computer Team", assignedTo: EMPLOYEES_SAMPLE[0].name }, // Alice
-  { id: "5", name: "Fix binding machine (Model X123)", status: "To Do", team: "Binding Team", assignedTo: "David Lee" }, // Unassigned to current sample, admin sees
-  { id: "6", name: "Prepare monthly financial report", status: "Blocked", team: "Management Team", assignedTo: EMPLOYEES_SAMPLE[3].name }, // Diana
-  { id: "7", name: "Schedule Q4 planning meeting", status: "To Do", team: "Management Team", assignedTo: EMPLOYEES_SAMPLE[3].name }, // Diana
+export const ALL_TASKS: Array<{ id: string; name: string; status: TaskStatus; team: Team; assignedTo: string; priority: TaskPriority }> = [
+  { id: "1", name: "Design new brochure", status: "Ongoing", team: "Computer Team", assignedTo: EMPLOYEES_SAMPLE[0].name, priority: "Normal" }, // Alice
+  { id: "2", name: "Print 1000 flyers", status: "Finished", team: "Printing Team", assignedTo: EMPLOYEES_SAMPLE[1].name, priority: "Normal" }, // Bob
+  { id: "3", name: "Client meeting for new campaign", status: "Finished", team: "Marketing & Accounts Team", assignedTo: EMPLOYEES_SAMPLE[2].name, priority: "Normal" }, // Charlie
+  { id: "4", name: "Update website homepage content", status: "Ongoing", team: "Computer Team", assignedTo: EMPLOYEES_SAMPLE[0].name, priority: "Urgent" }, // Alice
+  { id: "5", name: "Fix binding machine (Model X123)", status: "To Do", team: "Binding Team", assignedTo: "David Lee", priority: "Urgent" }, // Unassigned to current sample, admin sees
+  { id: "6", name: "Prepare monthly financial report", status: "Blocked", team: "Management Team", assignedTo: EMPLOYEES_SAMPLE[3].name, priority: "Normal" }, // Diana
+  { id: "7", name: "Schedule Q4 planning meeting", status: "To Do", team: "Management Team", assignedTo: EMPLOYEES_SAMPLE[3].name, priority: "Normal" }, // Diana
 ];
+
+// Urgent Task Icon (example, can be customized)
+export const UrgentTaskIcon = AlertTriangle;

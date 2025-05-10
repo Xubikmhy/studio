@@ -2,10 +2,10 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Briefcase, Clock, Users2, LogIn, LogOut } from "lucide-react";
+import { PlusCircle, Briefcase, Clock, Users2, LogIn, LogOut, Flame } from "lucide-react"; // Added Flame for urgent task
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast"; 
-import { CURRENT_USER_DATA, ALL_TASKS, ALL_ATTENDANCE_RECORDS } from "@/lib/constants";
+import { CURRENT_USER_DATA, ALL_TASKS, ALL_ATTENDANCE_RECORDS, UrgentTaskIcon } from "@/lib/constants";
 import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
@@ -153,7 +153,11 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           {/* This would be dynamically populated based on user's activities or relevant system events */}
-          <ul className="space-y-1 text-sm text-muted-foreground">
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-start p-2 hover:bg-muted rounded-md transition-colors">
+              <UrgentTaskIcon className="h-4 w-4 text-destructive mr-2 mt-0.5 shrink-0" />
+              <span><strong>URGENT:</strong> Task "Update website homepage content" assigned to you is overdue.</span>
+            </li>
             <li className="p-2 hover:bg-muted rounded-md transition-colors">- Task "Design new brochure" updated to Ongoing.</li>
             <li className="p-2 hover:bg-muted rounded-md transition-colors">- You punched in at 9:03 AM.</li>
             <li className="p-2 hover:bg-muted rounded-md transition-colors">- New company announcement: "System Maintenance".</li>

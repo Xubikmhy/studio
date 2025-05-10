@@ -1,4 +1,3 @@
-
 // @ts-nocheck
 "use client";
 
@@ -30,7 +29,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { handleCreateTask } from "@/lib/actions"; 
 import { CreateTaskSchema, type CreateTaskState, type CreateTaskFormValues } from "@/lib/schemas/task"; 
-import { TEAMS, TASK_STATUSES } from "@/lib/constants";
+import { TEAMS, TASK_STATUSES, TASK_PRIORITIES, CURRENT_USER_DATA, EMPLOYEES_SAMPLE } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, Send } from "lucide-react";
 
@@ -53,6 +52,7 @@ function SubmitButton() {
 export default function NewTaskPage() {
   const [state, formAction] = useFormState(handleCreateTask, initialState);
   const { toast } = useToast();
+  const isAdmin = CURRENT_USER_DATA.role === 'admin';
 
   const form = useForm<CreateTaskFormValues>({
     resolver: zodResolver(CreateTaskSchema),
@@ -60,8 +60,9 @@ export default function NewTaskPage() {
       taskName: "",
       description: "",
       team: undefined, 
-      assignedTo: "",
+      assignedTo: isAdmin ? "" : CURRENT_USER_DATA.name,
       status: "To Do",
+      priority: "Normal",
     },
     // Pass server-side errors to the form
     errors: state?.errors ? Object.entries(state.errors).reduce((acc, [key, value]) => {
@@ -69,7 +70,7 @@ export default function NewTaskPage() {
         acc[key as keyof CreateTaskFormValues] = { type: 'manual', message: value.join(', ') };
       }
       return acc;
-    }, {} as any) : undefined, // Using 'as any' for now to reconcile types, ideally improve this
+    }, {} as any) : undefined, 
   });
 
   useEffect(() => {
@@ -80,10 +81,13 @@ export default function NewTaskPage() {
         variant: state.success ? "default" : "destructive",
       });
       if (state.success) {
-        form.reset(); // Reset form on successful submission
+        form.reset(); 
+         // Reset assignedTo specifically if admin, otherwise it keeps previous selection
+        if (isAdmin) {
+          form.reset({ ...form.getValues(), assignedTo: "" });
+        }
       }
     }
-     // Reset form errors when server-side errors change
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
         if (fieldErrors && fieldErrors.length > 0) {
@@ -93,11 +97,11 @@ export default function NewTaskPage() {
           });
         }
       });
-    } else if (!state?.success) { // Clear errors if no server errors and not a success state (e.g. initial load)
+    } else if (!state?.success) { 
         form.clearErrors();
     }
 
-  }, [state, toast, form]);
+  }, [state, toast, form, isAdmin]);
 
   return (
     <div className="space-y-6">
@@ -182,40 +186,86 @@ export default function NewTaskPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Assigned To</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., John Doe" {...field} />
-                      </FormControl>
-                      <FormDescription>Who is assigned to complete this task?</FormDescription>
+                      {isAdmin ? (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an employee" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {EMPLOYEES_SAMPLE.map((employee) => (
+                              <SelectItem key={employee.id} value={employee.name}>
+                                {employee.name} ({employee.team})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <FormControl>
+                          <Input {...field} readOnly />
+                        </FormControl>
+                      )}
+                      <FormDescription>
+                        {isAdmin ? "Select the employee to assign this task to." : "This task will be assigned to you."}
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select task status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {TASK_STATUSES.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>Current status of the task.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select task status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TASK_STATUSES.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Current status of the task.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select task priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TASK_PRIORITIES.map((priority) => (
+                            <SelectItem key={priority} value={priority}>
+                              {priority}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Priority level of the task.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
                {state?.errors?.general && (
                 <FormMessage>{state.errors.general.join(", ")}</FormMessage>
               )}

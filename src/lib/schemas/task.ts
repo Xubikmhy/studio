@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TEAMS, TASK_STATUSES } from "@/lib/constants";
+import { TEAMS, TASK_STATUSES, TASK_PRIORITIES } from "@/lib/constants";
 
 export const CreateTaskSchema = z.object({
   taskName: z.string().min(3, { message: "Task name must be at least 3 characters." }),
@@ -7,6 +7,7 @@ export const CreateTaskSchema = z.object({
   team: z.enum(TEAMS, { errorMap: () => ({ message: "Please select a valid team."}) }),
   assignedTo: z.string().min(2, { message: "Assignee name must be at least 2 characters." }),
   status: z.enum(TASK_STATUSES, { errorMap: () => ({ message: "Please select a valid status."}) }),
+  priority: z.enum(TASK_PRIORITIES, { errorMap: () => ({ message: "Please select a valid priority."}) }),
 });
 
 export interface CreateTaskState {
@@ -17,6 +18,7 @@ export interface CreateTaskState {
     team?: string[];
     assignedTo?: string[];
     status?: string[];
+    priority?: string[];
     general?: string[];
   } | null;
   success?: boolean;
@@ -24,3 +26,4 @@ export interface CreateTaskState {
 
 // Infer the type from the schema for use in the form
 export type CreateTaskFormValues = z.infer<typeof CreateTaskSchema>;
+
