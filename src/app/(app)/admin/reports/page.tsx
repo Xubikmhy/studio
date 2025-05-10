@@ -4,8 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Download, FileText, CalendarDays, Users } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminReportsPage() {
+  const { toast } = useToast();
+
+  const handleGenerateReport = (reportType: string) => {
+    toast({
+      title: "Generate Report",
+      description: `Generating ${reportType} (simulated). This feature is not yet implemented.`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -31,7 +41,7 @@ export default function AdminReportsPage() {
                 <SelectItem value="monthly">Monthly Attendance</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="w-full" onClick={() => console.log('Generate Attendance Report clicked')}>
+            <Button className="w-full" onClick={() => handleGenerateReport('Attendance Report')}>
               <Download className="mr-2 h-4 w-4" /> Generate Report
             </Button>
           </CardContent>
@@ -54,7 +64,7 @@ export default function AdminReportsPage() {
                 <SelectItem value="custom">Custom Range</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="w-full" onClick={() => console.log('Generate Task Completion Report clicked')}>
+            <Button className="w-full" onClick={() => handleGenerateReport('Task Completion Report')}>
               <Download className="mr-2 h-4 w-4" /> Generate Report
             </Button>
           </CardContent>
@@ -78,7 +88,7 @@ export default function AdminReportsPage() {
                 <SelectItem value="printing">Printing Team</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="w-full" onClick={() => console.log('Generate Team Productivity Report clicked')}>
+            <Button className="w-full" onClick={() => handleGenerateReport('Team Productivity Report')}>
               <Download className="mr-2 h-4 w-4" /> Generate Report
             </Button>
           </CardContent>

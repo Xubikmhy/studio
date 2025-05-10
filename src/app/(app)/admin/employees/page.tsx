@@ -7,11 +7,37 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { EMPLOYEES_SAMPLE } from "@/lib/constants";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 // Use employee data from constants
 const employees = EMPLOYEES_SAMPLE;
 
 export default function AdminEmployeesPage() {
+  const { toast } = useToast();
+
+  const handleFilter = () => {
+    toast({
+      title: "Filter Employees",
+      description: "Employee filtering functionality is not yet implemented.",
+    });
+  };
+
+  const handleExport = () => {
+    toast({
+      title: "Export Employees",
+      description: "Employee data export functionality is not yet implemented.",
+    });
+  };
+
+  const handleEditEmployee = (employeeId: string) => {
+    toast({
+      title: "Edit Employee",
+      description: `Editing employee ${employeeId}. (This is a simulated action)`,
+    });
+    // In a real app, you might navigate to an edit page:
+    // router.push(`/admin/employees/${employeeId}/edit`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -33,10 +59,10 @@ export default function AdminEmployeesPage() {
                 <CardDescription>All registered employees in the system.</CardDescription>
             </div>
              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => console.log('Filter employees clicked')}>
+                <Button variant="outline" size="sm" onClick={handleFilter}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => console.log('Export employees clicked')}>
+                <Button variant="outline" size="sm" onClick={handleExport}>
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>
@@ -62,7 +88,7 @@ export default function AdminEmployeesPage() {
                   <TableCell>{employee.role}</TableCell>
                   <TableCell>{employee.baseSalary.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => console.log(`Edit employee ${employee.id} clicked`)}>
+                    <Button variant="ghost" size="icon" onClick={() => handleEditEmployee(employee.id)}>
                       <UserCog className="h-4 w-4" />
                       <span className="sr-only">Edit Employee</span>
                     </Button>

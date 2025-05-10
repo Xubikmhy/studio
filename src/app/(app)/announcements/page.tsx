@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { APP_NAME } from "@/lib/constants";
 import { PlusCircle, Search, Filter, Speaker } from "lucide-react"; // Added Speaker
 import Link from 'next/link';
+import { useToast } from "@/hooks/use-toast";
 
 // Placeholder data - in a real app, this would come from an API
 const announcementsData: Announcement[] = [
@@ -86,8 +87,16 @@ const uniqueCategories = Array.from(new Set(announcementsData.map(a => a.categor
 
 
 export default function AnnouncementsPage() {
+  const { toast } = useToast();
   // TODO: Implement search and filter functionality
   const announcements = announcementsData; // In future, this will be reactive based on search/filter
+
+  const handleApplyFilter = () => {
+    toast({
+      title: "Filter Announcements",
+      description: "Filtering announcements (simulated). This feature is not yet implemented.",
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -122,7 +131,7 @@ export default function AnnouncementsPage() {
                 ))}
             </SelectContent>
             </Select>
-            <Button variant="outline" className="w-full sm:w-auto" onClick={() => console.log('Apply filter clicked')}>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={handleApplyFilter}>
                 <Filter className="mr-2 h-4 w-4" /> Apply
             </Button>
         </div>

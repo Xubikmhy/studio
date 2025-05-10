@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { EMPLOYEES_SAMPLE } from "@/lib/constants";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 // Placeholder Salary Payment Data
 const salaryPayments = [
@@ -34,6 +35,22 @@ const getAdvanceStatusVariant = (status: string) => {
 
 
 export default function AdminFinancePage() {
+  const { toast } = useToast();
+
+  const handleFilter = (type: string) => {
+    toast({
+      title: `Filter ${type}`,
+      description: `Filtering ${type.toLowerCase()} (simulated). This feature is not yet implemented.`,
+    });
+  };
+
+  const handleExport = (type: string) => {
+    toast({
+      title: `Export ${type}`,
+      description: `Exporting ${type.toLowerCase()} (simulated). This feature is not yet implemented.`,
+    });
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -56,10 +73,10 @@ export default function AdminFinancePage() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-end gap-2 mb-4">
-                <Button variant="outline" size="sm" onClick={() => console.log('Filter salary payments clicked')}>
+                <Button variant="outline" size="sm" onClick={() => handleFilter('Salary Payments')}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => console.log('Export salary payments clicked')}>
+                <Button variant="outline" size="sm" onClick={() => handleExport('Salary Payments')}>
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>
@@ -103,10 +120,10 @@ export default function AdminFinancePage() {
           </CardHeader>
           <CardContent>
              <div className="flex justify-end gap-2 mb-4">
-                <Button variant="outline" size="sm" onClick={() => console.log('Filter salary advances clicked')}>
+                <Button variant="outline" size="sm" onClick={() => handleFilter('Salary Advances')}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => console.log('Export salary advances clicked')}>
+                <Button variant="outline" size="sm" onClick={() => handleExport('Salary Advances')}>
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>

@@ -10,16 +10,25 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { DEFAULT_USER_DATA } from "@/lib/constants"; // Using expanded user data
 import { Edit3, KeyRound, ShieldCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // In a real app, this would come from authentication context or API
 const user = DEFAULT_USER_DATA;
 
 export default function ProfilePage() {
+  const { toast } = useToast();
   const initials = user.name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+
+  const handleChangeProfilePicture = () => {
+    toast({
+      title: "Change Profile Picture",
+      description: "This functionality is not yet implemented. (Simulated action)",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -39,7 +48,7 @@ export default function ProfilePage() {
             <CardDescription>{user.role} - {user.team}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Button variant="outline" className="w-full" onClick={() => console.log('Change Profile Picture clicked')}>
+            <Button variant="outline" className="w-full" onClick={handleChangeProfilePicture}>
               <Edit3 className="mr-2 h-4 w-4" /> Change Profile Picture
             </Button>
           </CardContent>

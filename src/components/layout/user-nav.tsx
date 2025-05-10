@@ -15,16 +15,30 @@ import {
 import { DEFAULT_USER_DATA } from "@/lib/constants";
 import { LogOut, Settings, UserCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 // Using user data from constants
 const user = DEFAULT_USER_DATA;
 
 export function UserNav() {
+  const router = useRouter();
+  const { toast } = useToast();
+
   const initials = user.name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+
+  const handleLogout = () => {
+    // In a real app, you'd clear auth tokens/session here
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    router.push("/login");
+  };
 
   return (
     <DropdownMenu>
@@ -61,7 +75,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem> {/* onClick should handle logout */}
+        <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

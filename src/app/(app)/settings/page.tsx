@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use client";
 
@@ -14,12 +15,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Moon, Sun, Bell, Trash2, Palette, UserCog } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
+  const { toast } = useToast();
   // In a real app, these would be managed states
   const handleThemeChange = (theme: string) => {
-    console.log("Theme changed to:", theme);
-    // Implement theme switching logic here
+    toast({
+        title: "Theme Changed",
+        description: `Theme set to ${theme}. (Actual theme switching not implemented yet).`
+    });
+    // Implement theme switching logic here:
+    // e.g., document.documentElement.classList.remove('light', 'dark');
+    // if (theme === 'system') { /* check system preference */ } else { document.documentElement.classList.add(theme); }
   };
 
   return (

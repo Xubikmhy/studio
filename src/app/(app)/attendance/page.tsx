@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, ListFilter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 
 // Placeholder Attendance Data
 const attendanceRecords = [
@@ -13,6 +14,37 @@ const attendanceRecords = [
 ];
 
 export default function AttendancePage() {
+  const { toast } = useToast();
+
+  const handlePunchIn = () => {
+    toast({
+      title: "Punch In Successful",
+      description: "Your check-in has been recorded (simulated).",
+    });
+  };
+
+  const handlePunchOut = () => {
+    toast({
+      title: "Punch Out Successful",
+      description: "Your check-out has been recorded (simulated).",
+      variant: "destructive", 
+    });
+  };
+
+  const handleFilter = () => {
+    toast({
+      title: "Filter Attendance",
+      description: "Filtering attendance records (simulated). This feature is not yet implemented.",
+    });
+  };
+
+  const handleExport = () => {
+    toast({
+      title: "Export Attendance",
+      description: "Exporting attendance data (simulated). This feature is not yet implemented.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -21,10 +53,10 @@ export default function AttendancePage() {
             <p className="text-muted-foreground">Manage your daily check-ins, check-outs, and view attendance history.</p>
         </div>
         <div className="flex gap-2">
-            <Button variant="default" onClick={() => console.log('Punch In clicked')}>
+            <Button variant="default" onClick={handlePunchIn}>
                 <LogIn className="mr-2 h-4 w-4" /> Punch In
             </Button>
-            <Button variant="destructive" onClick={() => console.log('Punch Out clicked')}>
+            <Button variant="destructive" onClick={handlePunchOut}>
                 <LogOut className="mr-2 h-4 w-4" /> Punch Out
             </Button>
         </div>
@@ -37,10 +69,10 @@ export default function AttendancePage() {
                 <CardDescription>Your recent attendance records.</CardDescription>
             </div>
             <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => console.log('Filter attendance clicked')}>
+                <Button variant="outline" size="sm" onClick={handleFilter}>
                     <ListFilter className="mr-2 h-4 w-4" /> Filter
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => console.log('Export attendance clicked')}>
+                <Button variant="outline" size="sm" onClick={handleExport}>
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>
