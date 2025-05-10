@@ -3,9 +3,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useActionState } from "react"; // Updated import: useActionState from react
+import { useFormStatus } from "react-dom"; // Kept useFormStatus from react-dom
 
 import { Button } from "@/components/ui/button";
 import {
@@ -50,7 +50,7 @@ function SubmitButton() {
 }
 
 export default function NewTaskPage() {
-  const [state, formAction] = useFormState(handleCreateTask, initialState);
+  const [state, formAction] = useActionState(handleCreateTask, initialState); // Updated to useActionState
   const { toast } = useToast();
   const isAdmin = CURRENT_USER_DATA.role === 'admin';
 
@@ -64,7 +64,6 @@ export default function NewTaskPage() {
       status: "To Do",
       priority: "Normal",
     },
-    // Pass server-side errors to the form
     errors: state?.errors ? Object.entries(state.errors).reduce((acc, [key, value]) => {
       if (value && value.length > 0) {
         acc[key as keyof CreateTaskFormValues] = { type: 'manual', message: value.join(', ') };
@@ -82,7 +81,6 @@ export default function NewTaskPage() {
       });
       if (state.success) {
         form.reset(); 
-         // Reset assignedTo specifically if admin, otherwise it keeps previous selection
         if (isAdmin) {
           form.reset({ ...form.getValues(), assignedTo: "" });
         }

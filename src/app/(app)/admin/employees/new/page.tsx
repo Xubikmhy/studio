@@ -3,9 +3,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useActionState } from "react"; // Updated import: useActionState from react
+import { useFormStatus } from "react-dom"; // Kept useFormStatus from react-dom
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,7 +49,7 @@ function SubmitButton() {
 }
 
 export default function NewEmployeePage() {
-  const [state, formAction] = useFormState(handleCreateEmployee, initialState);
+  const [state, formAction] = useActionState(handleCreateEmployee, initialState); // Updated to useActionState
   const { toast } = useToast();
 
   const form = useForm<CreateEmployeeFormValues>({
@@ -59,7 +59,7 @@ export default function NewEmployeePage() {
       email: "",
       team: undefined, 
       roleInternal: "",
-      baseSalary: undefined, // Use undefined for number inputs that can be empty initially
+      baseSalary: undefined, 
     },
     errors: state?.errors ? Object.entries(state.errors).reduce((acc, [key, value]) => {
       if (value && value.length > 0) {
