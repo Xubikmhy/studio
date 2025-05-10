@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
 import { Printer, LogIn } from "lucide-react";
@@ -14,12 +15,12 @@ export default function HomePage() {
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Button variant="ghost" asChild>
-            <Link href="/login"> {/* Placeholder for actual login page */}
+            <Link href="/dashboard"> {/* Changed from /login to /dashboard */}
               Login
             </Link>
           </Button>
           <Button asChild>
-             <Link href="/dashboard"> {/* Placeholder for actual signup or dashboard */}
+             <Link href="/dashboard">
               Get Started
               <LogIn className="ml-2 h-4 w-4" />
             </Link>
@@ -47,7 +48,7 @@ export default function HomePage() {
                     </Link>
                   </Button>
                   <Button size="lg" variant="outline" asChild>
-                    <Link href="#features"> {/* Placeholder for features section */}
+                    <Link href="#features"> 
                       Learn More
                     </Link>
                   </Button>
@@ -94,8 +95,8 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground">Manage employees, view records, and generate reports.</p>
               </div>
               <div className="grid gap-1 p-4 rounded-lg border bg-background shadow-sm hover:shadow-md transition-shadow">
-                <h3 className="text-lg font-bold text-primary">Team Categorization</h3>
-                <p className="text-sm text-muted-foreground">Organize and filter by your company's teams.</p>
+                <h3 className="text-lg font-bold text-primary">Financial Management</h3>
+                <p className="text-sm text-muted-foreground">Handle salaries, advances, and financial overviews.</p>
               </div>
               <div className="grid gap-1 p-4 rounded-lg border bg-background shadow-sm hover:shadow-md transition-shadow">
                 <h3 className="text-lg font-bold text-primary">Mobile Friendly</h3>
