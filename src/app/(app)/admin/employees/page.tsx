@@ -7,6 +7,7 @@ import { PlusCircle, UserCog, ListFilter, Download, Trash2, UserX } from "lucide
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { fetchEmployees, deleteEmployee } from "@/lib/actions";
 import type { EmployeeProfile } from "@/lib/types"; 
@@ -25,6 +26,7 @@ import {
 
 export default function AdminEmployeesPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeProfile | null>(null);
@@ -47,7 +49,7 @@ export default function AdminEmployeesPage() {
 
   useEffect(() => {
     loadEmployees();
-  }, [toast]); // Removed loadEmployees from dependencies as it's stable
+  }, []); 
 
   const handleFilter = () => {
     toast({
@@ -64,12 +66,7 @@ export default function AdminEmployeesPage() {
   };
 
   const handleEditEmployee = (employeeId: string) => {
-    toast({
-      title: "Edit Employee",
-      description: `Editing employee ${employeeId}. (This functionality is not yet fully implemented)`,
-    });
-    // In a real app, you might navigate to an edit page:
-    // router.push(`/admin/employees/${employeeId}/edit`);
+    router.push(`/admin/employees/${employeeId}/edit`);
   };
 
   const confirmDeleteEmployee = (employee: EmployeeProfile) => {
@@ -221,9 +218,13 @@ export default function AdminEmployeesPage() {
                 </AlertDialogFooter>
               </>
             ) : (
+              // This fallback content for AlertDialogContent should ideally not be shown
+              // if the dialog is only opened when employeeToDelete is set.
+              // However, to satisfy Radix UI a11y, a title/desc might be needed.
+              // For a cleaner UX, ensure the dialog is only mounted/rendered when needed.
               <AlertDialogHeader>
-                <AlertDialogTitle>Error</AlertDialogTitle>
-                <AlertDialogDescription>No employee selected for deletion. This dialog should not be visible in this state.</AlertDialogDescription>
+                <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                <AlertDialogDescription>Preparing to delete an employee...</AlertDialogDescription>
               </AlertDialogHeader>
             )
           }

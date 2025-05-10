@@ -3,10 +3,12 @@
 "use server";
 
 import { CreateTaskSchema, type CreateTaskState } from "@/lib/schemas/task"; 
-import { CreateEmployeeSchema, type CreateEmployeeState } from "@/lib/schemas/employee";
+import { CreateEmployeeSchema, UpdateEmployeeSchema, type CreateEmployeeState, type UpdateEmployeeState } from "@/lib/schemas/employee";
 import { 
     addEmployeeToStore, 
     getEmployeesFromStore,
+    getEmployeeByIdFromStore,
+    updateEmployeeInStore,
     addTaskToStore,
     getTasksFromStore,
     getTasksForUserFromStore,
@@ -120,6 +122,79 @@ export async function fetchEmployees(): Promise<EmployeeProfile[]> {
     return []; 
   }
 }
+
+export async function fetchEmployeeById(id: string): Promise<EmployeeProfile | null> {
+  try {
+    return await getEmployeeByIdFromStore(id);
+  } catch (error) {
+    console.error(`Failed to fetch employee with id ${id}:`, error);
+    return null;
+  }
+}
+
+export async function handleUpdateEmployee(
+  employeeId: string, // employeeId is bound to this action
+  prevState: UpdateEmployeeState,
+  formData: FormData
+): Promise<UpdateEmployeeState> {
+  const validatedFields = UpdateEmployeeSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    team: formData.get("team"),
+    roleInternal: formData.get("roleInternal"),
+    baseSalary: formData.get("baseSalary"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Validation failed. Please check the employee details.",
+      success: false,
+      employeeId,
+    };
+  }
+
+  try {
+    // Check for email conflict (if email changed)
+    const currentEmployee = await getEmployeeByIdFromStore(employeeId);
+    if (currentEmployee && currentEmployee.email !== validatedFields.data.email) {
+      const existingEmployeeByEmail = await findEmployeeByUidOrEmail('', validatedFields.data.email);
+      if (existingEmployeeByEmail && existingEmployeeByEmail.id !== employeeId) {
+          return {
+              message: `An employee with email "${validatedFields.data.email}" already exists.`,
+              errors: { email: ["Email already in use by another employee."] },
+              success: false,
+              employeeId,
+          };
+      }
+    }
+
+    const updatedEmployee = await updateEmployeeInStore(employeeId, validatedFields.data);
+    if (!updatedEmployee) {
+      return {
+        message: "Employee not found or failed to update.",
+        errors: { general: ["Update operation failed."] },
+        success: false,
+        employeeId,
+      };
+    }
+    return {
+      message: `Employee "${updatedEmployee.name}" updated successfully!`,
+      errors: null,
+      success: true,
+      employeeId,
+    };
+  } catch (error) {
+    console.error("Failed to update employee:", error);
+    return {
+      message: "An error occurred while updating the employee.",
+      errors: { general: ["Server error, please try again."] },
+      success: false,
+      employeeId,
+    };
+  }
+}
+
 
 export async function deleteEmployee(employeeId: string): Promise<{ success: boolean; message: string }> {
     try {

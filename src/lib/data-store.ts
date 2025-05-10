@@ -3,6 +3,7 @@
 
 import type { EmployeeProfile, Task, AttendanceRecord, TaskStatus, Team, UserRole } from '@/lib/types'; // Assuming types are in a central place
 import { INITIAL_EMPLOYEES, INITIAL_TASKS, INITIAL_ATTENDANCE_RECORDS, TEAMS } from '@/lib/constants'; // Using renamed initial data
+import type { UpdateEmployeeFormValues } from './schemas/employee';
 
 // --- In-memory "database" ---
 let dbEmployees: EmployeeProfile[] = INITIAL_EMPLOYEES.map(emp => ({
@@ -20,6 +21,12 @@ let dbAttendance: AttendanceRecord[] = [...INITIAL_ATTENDANCE_RECORDS];
 export async function getEmployeesFromStore(): Promise<EmployeeProfile[]> {
   await new Promise(resolve => setTimeout(resolve, 100));
   return JSON.parse(JSON.stringify(dbEmployees));
+}
+
+export async function getEmployeeByIdFromStore(id: string): Promise<EmployeeProfile | null> {
+  await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
+  const employee = dbEmployees.find(emp => emp.id === id);
+  return employee ? JSON.parse(JSON.stringify(employee)) : null;
 }
 
 export async function findEmployeeByUidOrEmail(uid: string, email: string | null): Promise<EmployeeProfile | null> {
@@ -48,6 +55,27 @@ export async function addEmployeeToStore(
   dbEmployees.push(newEmployee);
   return JSON.parse(JSON.stringify(newEmployee));
 }
+
+export async function updateEmployeeInStore(id: string, data: UpdateEmployeeFormValues): Promise<EmployeeProfile | null> {
+  await new Promise(resolve => setTimeout(resolve, 100)); // Simulate async
+  const employeeIndex = dbEmployees.findIndex(emp => emp.id === id);
+  if (employeeIndex === -1) {
+    return null;
+  }
+  // Update only the fields present in UpdateEmployeeFormValues
+  dbEmployees[employeeIndex] = {
+    ...dbEmployees[employeeIndex], // Keep existing fields like id, uid, avatar, role
+    name: data.name,
+    email: data.email,
+    team: data.team,
+    roleInternal: data.roleInternal,
+    baseSalary: data.baseSalary,
+    // Potentially re-evaluate role if team/roleInternal changes, or keep existing role
+    // For now, keep existing role unless specific logic is added to change it upon edit
+  };
+  return JSON.parse(JSON.stringify(dbEmployees[employeeIndex]));
+}
+
 
 // Specifically for adding/updating users from Google Sign-In
 export async function addOrUpdateGoogleUserAsEmployee(googleUserData: {
@@ -133,7 +161,7 @@ export async function addOrUpdateAttendanceRecordStore(
   let record = dbAttendance.find(r => r.employeeId === employeeId && r.date === today && !r.checkOut);
 
   if (type === 'punch-in') {
-    if (record) { 
+    if (record && record.checkIn) { // check if already punched in and not punched out
       return null; 
     }
     const newRecord: AttendanceRecord = {

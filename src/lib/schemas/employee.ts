@@ -24,3 +24,22 @@ export interface CreateEmployeeState {
 }
 
 export type CreateEmployeeFormValues = z.infer<typeof CreateEmployeeSchema>;
+
+// For updating employees
+export const UpdateEmployeeSchema = CreateEmployeeSchema; // Can be the same for now
+
+export interface UpdateEmployeeState {
+  message?: string | null;
+  errors?: {
+    name?: string[];
+    email?: string[];
+    team?: string[];
+    roleInternal?: string[];
+    baseSalary?: string[];
+    general?: string[];
+  } | null;
+  success?: boolean;
+  employeeId?: string; // To ensure we're updating the correct employee
+}
+
+export type UpdateEmployeeFormValues = z.infer<typeof UpdateEmployeeSchema>;
