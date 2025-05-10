@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use server";
 
@@ -13,8 +14,56 @@ import {
     getAttendanceRecordsFromStore,
     getAttendanceRecordsForUserFromStore,
     getTodaysAttendanceForUserFromStore,
+    addOrUpdateGoogleUserAsEmployee,
+    findEmployeeByUidOrEmail,
+    deleteEmployeeFromStore,
 } from "./data-store";
 import type { EmployeeProfile, Task, AttendanceRecord } from "./types";
+
+// --- Google Sign-In Action ---
+interface GoogleSignInResult {
+  success: boolean;
+  message: string;
+  employee?: EmployeeProfile | null;
+  redirectTo?: string;
+}
+
+export async function processGoogleSignIn(userData: {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+}): Promise<GoogleSignInResult> {
+  if (!userData.uid || !userData.email) {
+    return { success: false, message: "Google Sign-In failed: Missing UID or Email." };
+  }
+
+  try {
+    const existingEmployee = await findEmployeeByUidOrEmail(userData.uid, userData.email);
+    
+    const employeeData = {
+      uid: userData.uid,
+      name: userData.displayName,
+      email: userData.email,
+      avatar: userData.photoURL,
+    };
+
+    const employeeProfile = await addOrUpdateGoogleUserAsEmployee(employeeData);
+
+    // In a real app, you would set up a session here and CURRENT_USER_DATA would be dynamic.
+    // For this example, we just confirm the operation.
+    return { 
+      success: true, 
+      message: existingEmployee ? "Welcome back!" : "Account created successfully!", 
+      employee: employeeProfile,
+      redirectTo: "/dashboard" 
+    };
+  } catch (error) {
+    console.error("Error processing Google Sign-In:", error);
+    return { success: false, message: "Server error during Google Sign-In." };
+  }
+}
+
 
 // --- Employee Actions ---
 export async function handleCreateEmployee(
@@ -26,7 +75,7 @@ export async function handleCreateEmployee(
     email: formData.get("email"),
     team: formData.get("team"),
     roleInternal: formData.get("roleInternal"),
-    baseSalary: formData.get("baseSalary"), // Zod schema handles coercion
+    baseSalary: formData.get("baseSalary"),
   });
 
   if (!validatedFields.success) {
@@ -38,7 +87,15 @@ export async function handleCreateEmployee(
   }
 
   try {
-    // roleInternal is now correctly part of validatedFields.data
+    // Check if employee with this email already exists (excluding UID check for manual adds)
+    const existingEmployeeByEmail = await findEmployeeByUidOrEmail('', validatedFields.data.email);
+    if (existingEmployeeByEmail) {
+        return {
+            message: `An employee with email "${validatedFields.data.email}" already exists.`,
+            errors: { email: ["Email already in use."] },
+            success: false,
+        };
+    }
     await addEmployeeToStore(validatedFields.data);
     return {
       message: `Employee "${validatedFields.data.name}" created successfully!`,
@@ -60,8 +117,21 @@ export async function fetchEmployees(): Promise<EmployeeProfile[]> {
     return await getEmployeesFromStore();
   } catch (error) {
     console.error("Failed to fetch employees:", error);
-    return []; // Return empty array on error
+    return []; 
   }
+}
+
+export async function deleteEmployee(employeeId: string): Promise<{ success: boolean; message: string }> {
+    try {
+        const success = await deleteEmployeeFromStore(employeeId);
+        if (success) {
+            return { success: true, message: "Employee deleted successfully." };
+        }
+        return { success: false, message: "Employee not found or already deleted." };
+    } catch (error) {
+        console.error("Failed to delete employee:", error);
+        return { success: false, message: "An error occurred while deleting the employee." };
+    }
 }
 
 // --- Task Actions ---

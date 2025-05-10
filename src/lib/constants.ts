@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 import { LayoutDashboard, ListChecks, Users, FileText, CalendarClock, Megaphone, Landmark, AlertTriangle } from 'lucide-react';
 import type { EmployeeProfile, Task, AttendanceRecord, NavItem, Team, UserRole, TaskStatus, TaskPriority } from './types';
@@ -23,15 +24,16 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 // Base data for initializing the data store
-export const INITIAL_EMPLOYEES_BASE: Omit<EmployeeProfile, 'avatar' | 'role'>[] = [
+export const INITIAL_EMPLOYEES_BASE: Omit<EmployeeProfile, 'avatar' | 'role' | 'uid'>[] = [
   { id: "1", name: "Alice Wonderland", email: "alice@example.com", team: TEAMS[1], roleInternal: "Designer", baseSalary: 60000 },
   { id: "2", name: "Bob The Builder", email: "bob@example.com", team: TEAMS[2], roleInternal: "Printer Operator", baseSalary: 55000 },
   { id: "3", name: "Charlie Brown", email: "charlie@example.com", team: TEAMS[4], roleInternal: "Account Manager", baseSalary: 65000 },
   { id: "4", name: "Diana Prince", email: "diana@example.com", team: TEAMS[0], roleInternal: "Manager", baseSalary: 80000 },
 ];
 
-export const INITIAL_EMPLOYEES: EmployeeProfile[] = INITIAL_EMPLOYEES_BASE.map(emp => ({
+export const INITIAL_EMPLOYEES: EmployeeProfile[] = INITIAL_EMPLOYEES_BASE.map((emp, index) => ({
   ...emp,
+  uid: `firebase-uid-${emp.id}-${index}`, // Placeholder UID
   avatar: `https://picsum.photos/seed/${encodeURIComponent(emp.name)}/100/100`,
   role: emp.id === "4" ? 'admin' : 'employee', // Diana (id 4) is admin
 }));

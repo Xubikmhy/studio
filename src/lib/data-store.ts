@@ -1,15 +1,16 @@
+
 'use server';
 
 import type { EmployeeProfile, Task, AttendanceRecord, TaskStatus, Team, UserRole } from '@/lib/types'; // Assuming types are in a central place
-import { INITIAL_EMPLOYEES, INITIAL_TASKS, INITIAL_ATTENDANCE_RECORDS } from '@/lib/constants'; // Using renamed initial data
+import { INITIAL_EMPLOYEES, INITIAL_TASKS, INITIAL_ATTENDANCE_RECORDS, TEAMS } from '@/lib/constants'; // Using renamed initial data
 
 // --- In-memory "database" ---
 let dbEmployees: EmployeeProfile[] = INITIAL_EMPLOYEES.map(emp => ({
     ...emp,
-    // Ensure avatar and consistent role field for newly added employees as well
     avatar: emp.avatar || `https://picsum.photos/seed/${encodeURIComponent(emp.name)}/100/100`,
-    role: emp.role || (emp.id === '4' ? 'admin' : 'employee') as UserRole, // Example logic for role based on initial data
+    role: emp.role || (emp.id === '4' ? 'admin' : 'employee') as UserRole,
     roleInternal: emp.roleInternal || emp.role,
+    uid: emp.uid || `firebase-uid-${emp.id}-${Math.random().toString(36).substring(7)}`, // Ensure UID
 }));
 
 let dbTasks: Task[] = [...INITIAL_TASKS];
@@ -17,25 +18,75 @@ let dbAttendance: AttendanceRecord[] = [...INITIAL_ATTENDANCE_RECORDS];
 
 // --- Employee Store Functions ---
 export async function getEmployeesFromStore(): Promise<EmployeeProfile[]> {
-  // Simulate async operation
   await new Promise(resolve => setTimeout(resolve, 100));
-  return JSON.parse(JSON.stringify(dbEmployees)); // Return a copy to prevent direct mutation
+  return JSON.parse(JSON.stringify(dbEmployees));
 }
 
-export async function addEmployeeToStore(employeeData: Omit<EmployeeProfile, 'id' | 'avatar' | 'role'> & { roleInternal: string }): Promise<EmployeeProfile> {
+export async function findEmployeeByUidOrEmail(uid: string, email: string | null): Promise<EmployeeProfile | null> {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const employee = dbEmployees.find(emp => emp.uid === uid || (email && emp.email === email));
+  return employee ? JSON.parse(JSON.stringify(employee)) : null;
+}
+
+// Updated to handle manual employee creation, ensuring all fields are present
+export async function addEmployeeToStore(
+  employeeData: Omit<EmployeeProfile, 'id' | 'avatar' | 'role' | 'uid'> & { roleInternal: string }
+): Promise<EmployeeProfile> {
   await new Promise(resolve => setTimeout(resolve, 100));
   const newEmployee: EmployeeProfile = {
-    id: String(Date.now()), // Simple ID generation
-    ...employeeData,
+    id: String(Date.now()), // Simple internal ID generation
+    uid: `manual-uid-${String(Date.now())}`, // Placeholder UID for manually added users
+    name: employeeData.name,
+    email: employeeData.email,
     avatar: `https://picsum.photos/seed/${encodeURIComponent(employeeData.name)}/100/100`,
-    // Determine app role based on some logic, e.g., if roleInternal is 'Manager' or similar
-    // For simplicity, new employees are 'employee'. Could be enhanced.
-    role: employeeData.team === "Management Team" ? 'admin' : 'employee', 
-    roleInternal: employeeData.roleInternal, // This now comes from the form
+    team: employeeData.team,
+    roleInternal: employeeData.roleInternal,
+    // Assign 'admin' role if team is 'Management Team' and roleInternal is 'Manager', otherwise 'employee'
+    role: (employeeData.team === "Management Team" && employeeData.roleInternal.toLowerCase().includes("manager")) ? 'admin' : 'employee',
+    baseSalary: employeeData.baseSalary,
   };
   dbEmployees.push(newEmployee);
   return JSON.parse(JSON.stringify(newEmployee));
 }
+
+// Specifically for adding/updating users from Google Sign-In
+export async function addOrUpdateGoogleUserAsEmployee(googleUserData: {
+  uid: string;
+  name: string | null;
+  email: string | null;
+  avatar: string | null;
+}): Promise<EmployeeProfile> {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  let employee = dbEmployees.find(emp => emp.uid === googleUserData.uid || (googleUserData.email && emp.email === googleUserData.email));
+
+  if (employee) {
+    // Update existing employee details if necessary
+    if (googleUserData.name) employee.name = googleUserData.name;
+    if (googleUserData.email) employee.email = googleUserData.email; // UID should be primary link
+    if (googleUserData.avatar) employee.avatar = googleUserData.avatar;
+    // Ensure UID is set if matched by email
+    if (!employee.uid) employee.uid = googleUserData.uid;
+
+  } else {
+    // Add as new employee with default values
+    const newInternalId = String(Date.now());
+    employee = {
+      id: newInternalId,
+      uid: googleUserData.uid,
+      name: googleUserData.name || "New User",
+      email: googleUserData.email || `user-${newInternalId}@example.com`,
+      avatar: googleUserData.avatar || `https://picsum.photos/seed/${encodeURIComponent(googleUserData.name || 'New User')}/100/100`,
+      team: "Unassigned", // Default team
+      roleInternal: "Employee", // Default role title
+      role: 'employee', // Default app role
+      baseSalary: 30000, // Default salary
+    };
+    dbEmployees.push(employee);
+  }
+  return JSON.parse(JSON.stringify(employee));
+}
+
 
 // --- Task Store Functions ---
 export async function getTasksFromStore(): Promise<Task[]> {
@@ -70,7 +121,7 @@ export async function getAttendanceRecordsForUserFromStore(employeeId: string): 
 }
 
 export async function addOrUpdateAttendanceRecordStore(
-  employeeId: string,
+  employeeId: string, // This should be the internal ID (EmployeeProfile.id)
   employeeName: string,
   type: 'punch-in' | 'punch-out'
 ): Promise<AttendanceRecord | null> {
@@ -82,8 +133,8 @@ export async function addOrUpdateAttendanceRecordStore(
   let record = dbAttendance.find(r => r.employeeId === employeeId && r.date === today && !r.checkOut);
 
   if (type === 'punch-in') {
-    if (record) { // Already punched in today and not punched out
-      return null; // Or handle as an error/warning
+    if (record) { 
+      return null; 
     }
     const newRecord: AttendanceRecord = {
       id: String(Date.now()),
@@ -96,18 +147,17 @@ export async function addOrUpdateAttendanceRecordStore(
     };
     dbAttendance.push(newRecord);
     return JSON.parse(JSON.stringify(newRecord));
-  } else { // punch-out
-    if (!record || !record.checkIn) { // Not punched in or record invalid
-      return null; // Or handle as an error/warning
+  } else { 
+    if (!record || !record.checkIn) { 
+      return null; 
     }
     record.checkOut = currentTime;
     
-    // Calculate total hours
     const checkInTime = new Date(`${today} ${record.checkIn}`);
     const checkOutTime = new Date(`${today} ${record.checkOut}`);
     if (!isNaN(checkInTime.getTime()) && !isNaN(checkOutTime.getTime())) {
         let diffMs = checkOutTime.getTime() - checkInTime.getTime();
-        if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000; // Handle overnight if necessary, though less likely for this app
+        if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000; 
 
         const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
         const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -115,7 +165,6 @@ export async function addOrUpdateAttendanceRecordStore(
     } else {
         record.totalHours = "Error";
     }
-    // Update the record in dbAttendance
     dbAttendance = dbAttendance.map(r => r.id === record!.id ? record! : r);
     return JSON.parse(JSON.stringify(record));
   }
@@ -126,4 +175,17 @@ export async function getTodaysAttendanceForUserFromStore(employeeId: string): P
     const today = new Date().toISOString().split('T')[0];
     const record = dbAttendance.find(r => r.employeeId === employeeId && r.date === today);
     return record ? JSON.parse(JSON.stringify(record)) : null;
+}
+
+export async function deleteEmployeeFromStore(employeeId: string): Promise<boolean> {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const initialLength = dbEmployees.length;
+  dbEmployees = dbEmployees.filter(emp => emp.id !== employeeId);
+  // Also remove related tasks and attendance for the deleted employee
+  dbTasks = dbTasks.filter(task => {
+    const employee = dbEmployees.find(e => e.id === employeeId); // Check against original list before filtering
+    return !employee || task.assignedTo !== employee.name; // This logic might need refinement if tasks are assigned by ID
+  });
+  dbAttendance = dbAttendance.filter(att => att.employeeId !== employeeId);
+  return dbEmployees.length < initialLength;
 }

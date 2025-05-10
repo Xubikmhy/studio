@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 
 export const TEAMS_CONST = [
@@ -6,6 +7,7 @@ export const TEAMS_CONST = [
   "Printing Team",
   "Binding Team",
   "Marketing & Accounts Team",
+  "Unassigned",
 ] as const;
 
 export type Team = typeof TEAMS_CONST[number];
@@ -19,7 +21,8 @@ export type TaskPriority = typeof TASK_PRIORITIES_CONST[number];
 export type UserRole = 'admin' | 'employee';
 
 export interface EmployeeProfile {
-  id: string;
+  id: string; // Internal ID
+  uid: string; // Firebase User ID
   name: string;
   email: string;
   avatar: string;
@@ -41,7 +44,7 @@ export interface Task {
 
 export interface AttendanceRecord {
   id: string;
-  employeeId: string;
+  employeeId: string; // Should correspond to EmployeeProfile.id
   employeeName: string;
   date: string; // YYYY-MM-DD
   checkIn: string | null; // HH:MM AM/PM
