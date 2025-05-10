@@ -1,3 +1,4 @@
+
 "use client";
 import type { PropsWithChildren } from "react";
 import {
@@ -21,16 +22,14 @@ export default function AppLayout({ children }: PropsWithChildren) {
     <SidebarProvider defaultOpen={true}>
       <Sidebar collapsible="icon" className="border-r">
         <SidebarHeader className="p-4 flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg text-primary group-data-[collapsible=icon]:hidden">
+            {/* Updated Link and Span for conditional text visibility */}
+            <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-lg text-primary">
                 <Printer className="h-6 w-6" />
-                <span>{APP_NAME}</span>
+                {/* This span will be hidden when the parent Sidebar has data-collapsible="icon" */}
+                <span className="group-data-[collapsible=icon]:hidden">{APP_NAME}</span>
             </Link>
-            <Link href="/dashboard" className="items-center gap-2 font-semibold text-lg text-primary hidden group-data-[collapsible=icon]:flex">
-                <Printer className="h-6 w-6" />
-            </Link>
-          <div className="group-data-[collapsible=icon]:hidden">
+            {/* SidebarTrigger is now directly here, its visibility handled by parent states or its own logic if any */}
             <SidebarTrigger />
-          </div>
         </SidebarHeader>
         <SidebarContent className="p-2 pr-0">
           <SidebarNav />
