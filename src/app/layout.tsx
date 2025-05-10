@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className={`antialiased`}> {/* Font variables are applied in html tag now */}
+      <body className={`antialiased`} suppressHydrationWarning={true}> {/* Font variables are applied in html tag now */}
         <QueryProvider>
           {children}
           <Toaster />
