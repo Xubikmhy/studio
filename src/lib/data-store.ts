@@ -77,7 +77,7 @@ export async function addOrUpdateGoogleUserAsEmployee(googleUserData: {
       name: googleUserData.name || "New User",
       email: googleUserData.email || `user-${newInternalId}@example.com`,
       avatar: googleUserData.avatar || `https://picsum.photos/seed/${encodeURIComponent(googleUserData.name || 'New User')}/100/100`,
-      team: "Unassigned", // Default team
+      team: "Unassigned" as Team, // Default team
       roleInternal: "Employee", // Default role title
       role: 'employee', // Default app role
       baseSalary: 30000, // Default salary
@@ -179,13 +179,19 @@ export async function getTodaysAttendanceForUserFromStore(employeeId: string): P
 
 export async function deleteEmployeeFromStore(employeeId: string): Promise<boolean> {
   await new Promise(resolve => setTimeout(resolve, 100));
+  const employeeToDelete = dbEmployees.find(emp => emp.id === employeeId);
+  
+  if (!employeeToDelete) {
+    return false; // Employee not found
+  }
+  const employeeNameToFilterTasks = employeeToDelete.name; // Get name before deletion
+
   const initialLength = dbEmployees.length;
   dbEmployees = dbEmployees.filter(emp => emp.id !== employeeId);
+  
   // Also remove related tasks and attendance for the deleted employee
-  dbTasks = dbTasks.filter(task => {
-    const employee = dbEmployees.find(e => e.id === employeeId); // Check against original list before filtering
-    return !employee || task.assignedTo !== employee.name; // This logic might need refinement if tasks are assigned by ID
-  });
+  dbTasks = dbTasks.filter(task => task.assignedTo !== employeeNameToFilterTasks);
   dbAttendance = dbAttendance.filter(att => att.employeeId !== employeeId);
+  
   return dbEmployees.length < initialLength;
 }
