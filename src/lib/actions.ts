@@ -4,6 +4,7 @@
 
 import { CreateTaskSchema, type CreateTaskState } from "@/lib/schemas/task"; 
 import { CreateEmployeeSchema, UpdateEmployeeSchema, type CreateEmployeeState, type UpdateEmployeeState } from "@/lib/schemas/employee";
+import { LogSalaryPaymentSchema, type LogSalaryPaymentState, RecordSalaryAdvanceSchema, type RecordSalaryAdvanceState } from "@/lib/schemas/finance";
 import { 
     addEmployeeToStore, 
     getEmployeesFromStore,
@@ -19,8 +20,14 @@ import {
     addOrUpdateGoogleUserAsEmployee,
     findEmployeeByUidOrEmail,
     deleteEmployeeFromStore,
+    addSalaryPaymentToStore,
+    getSalaryPaymentsFromStore,
+    addSalaryAdvanceToStore,
+    getSalaryAdvancesFromStore,
 } from "./data-store";
-import type { EmployeeProfile, Task, AttendanceRecord } from "./types";
+import type { EmployeeProfile, Task, AttendanceRecord, SalaryPayment, SalaryAdvance } from "./types";
+import { format } from 'date-fns';
+
 
 // --- Google Sign-In Action ---
 interface GoogleSignInResult {
@@ -52,8 +59,6 @@ export async function processGoogleSignIn(userData: {
 
     const employeeProfile = await addOrUpdateGoogleUserAsEmployee(employeeData);
 
-    // In a real app, you would set up a session here and CURRENT_USER_DATA would be dynamic.
-    // For this example, we just confirm the operation.
     return { 
       success: true, 
       message: existingEmployee ? "Welcome back!" : "Account created successfully!", 
@@ -89,7 +94,6 @@ export async function handleCreateEmployee(
   }
 
   try {
-    // Check if employee with this email already exists (excluding UID check for manual adds)
     const existingEmployeeByEmail = await findEmployeeByUidOrEmail('', validatedFields.data.email);
     if (existingEmployeeByEmail) {
         return {
@@ -133,7 +137,7 @@ export async function fetchEmployeeById(id: string): Promise<EmployeeProfile | n
 }
 
 export async function handleUpdateEmployee(
-  employeeId: string, // employeeId is bound to this action
+  employeeId: string, 
   prevState: UpdateEmployeeState,
   formData: FormData
 ): Promise<UpdateEmployeeState> {
@@ -155,7 +159,6 @@ export async function handleUpdateEmployee(
   }
 
   try {
-    // Check for email conflict (if email changed)
     const currentEmployee = await getEmployeeByIdFromStore(employeeId);
     if (currentEmployee && currentEmployee.email !== validatedFields.data.email) {
       const existingEmployeeByEmail = await findEmployeeByUidOrEmail('', validatedFields.data.email);
@@ -194,7 +197,6 @@ export async function handleUpdateEmployee(
     };
   }
 }
-
 
 export async function deleteEmployee(employeeId: string): Promise<{ success: boolean; message: string }> {
     try {
@@ -266,7 +268,6 @@ export async function fetchUserTasks(userName: string): Promise<Task[]> {
   }
 }
 
-
 // --- Attendance Actions ---
 export async function punchIn(employeeId: string, employeeName: string): Promise<{ success: boolean; message: string; record?: AttendanceRecord | null }> {
   try {
@@ -319,4 +320,97 @@ export async function fetchTodaysUserAttendance(employeeId: string): Promise<Att
         console.error(`Failed to fetch today's attendance for user ${employeeId}:`, error);
         return null;
     }
+}
+
+// --- Finance Actions ---
+export async function fetchSalaryPayments(): Promise<SalaryPayment[]> {
+    try {
+        return await getSalaryPaymentsFromStore();
+    } catch (error) {
+        console.error("Failed to fetch salary payments:", error);
+        return [];
+    }
+}
+
+export async function handleLogSalaryPayment(
+  prevState: LogSalaryPaymentState,
+  formData: FormData
+): Promise<LogSalaryPaymentState> {
+  const paymentDate = formData.get("paymentDate");
+  const validatedFields = LogSalaryPaymentSchema.safeParse({
+    employeeId: formData.get("employeeId"),
+    amount: formData.get("amount"),
+    paymentDate: paymentDate ? new Date(paymentDate as string) : undefined, // Handle date conversion
+    notes: formData.get("notes"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Validation failed. Please check the payment details.",
+      success: false,
+    };
+  }
+
+  try {
+    await addSalaryPaymentToStore(validatedFields.data);
+    return {
+      message: `Salary payment logged successfully!`,
+      errors: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to log salary payment:", error);
+    return {
+      message: (error as Error).message || "An error occurred while logging the payment.",
+      errors: { general: ["Server error, please try again."] },
+      success: false,
+    };
+  }
+}
+
+export async function fetchSalaryAdvances(): Promise<SalaryAdvance[]> {
+    try {
+        return await getSalaryAdvancesFromStore();
+    } catch (error) {
+        console.error("Failed to fetch salary advances:", error);
+        return [];
+    }
+}
+
+export async function handleRecordSalaryAdvance(
+  prevState: RecordSalaryAdvanceState,
+  formData: FormData
+): Promise<RecordSalaryAdvanceState> {
+  const advanceDate = formData.get("advanceDate");
+  const validatedFields = RecordSalaryAdvanceSchema.safeParse({
+    employeeId: formData.get("employeeId"),
+    amount: formData.get("amount"),
+    advanceDate: advanceDate ? new Date(advanceDate as string) : undefined,
+    reason: formData.get("reason"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Validation failed. Please check the advance details.",
+      success: false,
+    };
+  }
+
+  try {
+    await addSalaryAdvanceToStore(validatedFields.data);
+    return {
+      message: `Salary advance recorded successfully!`,
+      errors: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to record salary advance:", error);
+    return {
+      message: (error as Error).message || "An error occurred while recording the advance.",
+      errors: { general: ["Server error, please try again."] },
+      success: false,
+    };
+  }
 }

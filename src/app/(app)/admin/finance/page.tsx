@@ -1,27 +1,16 @@
+
 "use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, DollarSign, TrendingDown, ListFilter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { INITIAL_EMPLOYEES } from "@/lib/constants"; // Use INITIAL_EMPLOYEES
-import type { SalaryPayment, SalaryAdvance } from "@/lib/types"; // Import types
+import type { SalaryPayment, SalaryAdvance } from "@/lib/types"; 
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { fetchSalaryPayments, fetchSalaryAdvances } from "@/lib/actions";
 
-// Placeholder Salary Payment Data using INITIAL_EMPLOYEES
-const salaryPayments: SalaryPayment[] = [
-  { id: "sp1", employeeId: INITIAL_EMPLOYEES[0].id, employeeName: INITIAL_EMPLOYEES[0].name, amount: 60000, paymentDate: "2024-07-30", notes: "July Salary" },
-  { id: "sp2", employeeId: INITIAL_EMPLOYEES[1].id, employeeName: INITIAL_EMPLOYEES[1].name, amount: 55000, paymentDate: "2024-07-30", notes: "July Salary" },
-  { id: "sp3", employeeId: INITIAL_EMPLOYEES[3].id, employeeName: INITIAL_EMPLOYEES[3].name, amount: 80000, paymentDate: "2024-07-29", notes: "July Salary + Bonus" },
-];
-
-// Placeholder Salary Advance Data using INITIAL_EMPLOYEES
-const salaryAdvances: SalaryAdvance[] = [
-  { id: "sa1", employeeId: INITIAL_EMPLOYEES[2].id, employeeName: INITIAL_EMPLOYEES[2].name, amount: 5000, advanceDate: "2024-07-15", reason: "Medical Emergency", status: "Pending" },
-  { id: "sa2", employeeId: INITIAL_EMPLOYEES[0].id, employeeName: INITIAL_EMPLOYEES[0].name, amount: 10000, advanceDate: "2024-06-20", reason: "Personal", status: "Partially Repaid" },
-  { id: "sa3", employeeId: INITIAL_EMPLOYEES[1].id, employeeName: INITIAL_EMPLOYEES[1].name, amount: 7000, advanceDate: "2024-08-02", reason: "Urgent Need", status: "Approved" },
-];
 
 const getAdvanceStatusVariant = (status: SalaryAdvance['status']) => {
   switch (status.toLowerCase()) {
@@ -36,6 +25,37 @@ const getAdvanceStatusVariant = (status: SalaryAdvance['status']) => {
 
 export default function AdminFinancePage() {
   const { toast } = useToast();
+  const [salaryPayments, setSalaryPayments] = useState<SalaryPayment[]>([]);
+  const [salaryAdvances, setSalaryAdvances] = useState<SalaryAdvance[]>([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(true);
+  const [isLoadingAdvances, setIsLoadingAdvances] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setIsLoadingPayments(true);
+      setIsLoadingAdvances(true);
+      try {
+        const [payments, advances] = await Promise.all([
+          fetchSalaryPayments(),
+          fetchSalaryAdvances()
+        ]);
+        setSalaryPayments(payments);
+        setSalaryAdvances(advances);
+      } catch (error) {
+        console.error("Failed to load finance data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load finance data.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingPayments(false);
+        setIsLoadingAdvances(false);
+      }
+    }
+    loadData();
+  }, [toast]);
+
 
   const handleFilter = (type: string) => {
     toast({
@@ -50,6 +70,10 @@ export default function AdminFinancePage() {
       description: `Exporting ${type.toLowerCase()} (simulated). This feature is not yet implemented.`,
     });
   };
+
+  const totalSalariesPaidThisMonth = salaryPayments.reduce((sum, p) => sum + p.amount, 0);
+  const totalAdvancesOutstanding = salaryAdvances.filter(a => a.status !== 'Repaid').reduce((sum, p) => sum + p.amount, 0);
+  const employeesWithAdvancesCount = new Set(salaryAdvances.filter(a => a.status !== 'Repaid').map(a => a.employeeId)).size;
 
   return (
     <div className="space-y-8">
@@ -80,28 +104,32 @@ export default function AdminFinancePage() {
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Amount (NPR)</TableHead>
-                  <TableHead>Payment Date</TableHead>
-                  <TableHead>Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salaryPayments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">{payment.employeeName}</TableCell>
-                    <TableCell>{payment.amount.toLocaleString()}</TableCell>
-                    <TableCell>{payment.paymentDate}</TableCell>
-                    <TableCell>{payment.notes}</TableCell>
+            {isLoadingPayments ? (
+              <p className="text-muted-foreground text-center py-8">Loading salary payments...</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Amount (NPR)</TableHead>
+                    <TableHead>Payment Date</TableHead>
+                    <TableHead>Notes</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {salaryPayments.length === 0 && (
-              <p className="text-muted-foreground text-center py-8">No salary payments recorded yet.</p>
+                </TableHeader>
+                <TableBody>
+                  {salaryPayments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="font-medium">{payment.employeeName}</TableCell>
+                      <TableCell>{payment.amount.toLocaleString()}</TableCell>
+                      <TableCell>{payment.paymentDate}</TableCell>
+                      <TableCell>{payment.notes}</TableCell>
+                    </TableRow>
+                  ))}
+                  {salaryPayments.length === 0 && (
+                    <TableRow><TableCell colSpan={4} className="text-muted-foreground text-center py-8">No salary payments recorded yet.</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
@@ -113,7 +141,7 @@ export default function AdminFinancePage() {
               <CardDescription>Manage and track employee salary advances.</CardDescription>
             </div>
             <Button size="sm" asChild>
-              <Link href="/admin/finance/new-advance">
+              <Link href="/admin/finance/new-advance"> {/* TODO: Create this page */}
                 <PlusCircle className="mr-2 h-4 w-4" /> Record New Advance
               </Link>
             </Button>
@@ -127,32 +155,36 @@ export default function AdminFinancePage() {
                     <Download className="mr-2 h-4 w-4" /> Export
                 </Button>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Amount (NPR)</TableHead>
-                  <TableHead>Advance Date</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salaryAdvances.map((advance) => (
-                  <TableRow key={advance.id}>
-                    <TableCell className="font-medium">{advance.employeeName}</TableCell>
-                    <TableCell>{advance.amount.toLocaleString()}</TableCell>
-                    <TableCell>{advance.advanceDate}</TableCell>
-                    <TableCell className="max-w-[150px] truncate" title={advance.reason}>{advance.reason}</TableCell>
-                    <TableCell>
-                      <Badge variant={getAdvanceStatusVariant(advance.status) as any}>{advance.status}</Badge>
-                    </TableCell>
+            {isLoadingAdvances ? (
+              <p className="text-muted-foreground text-center py-8">Loading salary advances...</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Amount (NPR)</TableHead>
+                    <TableHead>Advance Date</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {salaryAdvances.length === 0 && (
-              <p className="text-muted-foreground text-center py-8">No salary advances recorded yet.</p>
+                </TableHeader>
+                <TableBody>
+                  {salaryAdvances.map((advance) => (
+                    <TableRow key={advance.id}>
+                      <TableCell className="font-medium">{advance.employeeName}</TableCell>
+                      <TableCell>{advance.amount.toLocaleString()}</TableCell>
+                      <TableCell>{advance.advanceDate}</TableCell>
+                      <TableCell className="max-w-[150px] truncate" title={advance.reason}>{advance.reason}</TableCell>
+                      <TableCell>
+                        <Badge variant={getAdvanceStatusVariant(advance.status) as any}>{advance.status}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {salaryAdvances.length === 0 && (
+                     <TableRow><TableCell colSpan={5} className="text-muted-foreground text-center py-8">No salary advances recorded yet.</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
@@ -161,24 +193,23 @@ export default function AdminFinancePage() {
        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <CardHeader>
             <CardTitle>Financial Summary</CardTitle>
-            <CardDescription>Overview of key financial metrics. (Simulated Data)</CardDescription>
+            <CardDescription>Overview of key financial metrics.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Total Salaries Paid (This Month)</p>
-                <p className="text-2xl font-bold text-foreground">NPR {salaryPayments.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</p> 
+                <p className="text-2xl font-bold text-foreground">NPR {isLoadingPayments ? "..." : totalSalariesPaidThisMonth.toLocaleString()}</p> 
             </div>
             <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Total Advances Outstanding</p>
-                <p className="text-2xl font-bold text-foreground">NPR {salaryAdvances.filter(a => a.status !== 'Repaid').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground">NPR {isLoadingAdvances ? "..." : totalAdvancesOutstanding.toLocaleString()}</p>
             </div>
              <div className="p-4 border rounded-lg bg-card/50 hover:shadow-md transition-shadow">
                 <p className="text-sm font-medium text-muted-foreground">Employees with Advances</p>
-                <p className="text-2xl font-bold text-foreground">{new Set(salaryAdvances.filter(a => a.status !== 'Repaid').map(a => a.employeeId)).size}</p>
+                <p className="text-2xl font-bold text-foreground">{isLoadingAdvances ? "..." : employeesWithAdvancesCount}</p>
             </div>
         </CardContent>
       </Card>
-
     </div>
   );
 }

@@ -59,13 +59,12 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
-// Placeholder for Finance types if needed later
 export interface SalaryPayment {
   id: string;
-  employeeId: string;
+  employeeId: string; 
   employeeName: string;
   amount: number;
-  paymentDate: string; // YYYY-MM-DD
+  paymentDate: string; // YYYY-MM-DD string for simplicity, can be Date object
   notes?: string;
 }
 
@@ -74,7 +73,7 @@ export interface SalaryAdvance {
   employeeId: string;
   employeeName: string;
   amount: number;
-  advanceDate: string; // YYYY-MM-DD
+  advanceDate: string; // YYYY-MM-DD string
   reason?: string;
   status: "Pending" | "Approved" | "Repaid" | "Partially Repaid" | "Rejected";
 }

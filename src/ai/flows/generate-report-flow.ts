@@ -8,7 +8,7 @@
  */
 
 import {ai} from '@/ai/ai-instance'; // Corrected path
-import {z} from 'genkit/zod';
+import {z} from 'genkit'; // Corrected import for Zod
 
 export const GenerateReportInputSchema = z.object({
   reportType: z.string().describe('The type of report to generate (e.g., "Daily Attendance", "Task Completion - Last 7 Days").'),
