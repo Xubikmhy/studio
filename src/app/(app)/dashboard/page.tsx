@@ -1,4 +1,3 @@
-
 "use client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ export default function DashboardPage() {
     toast({
       title: "Punch Out Successful",
       description: "Your check-out has been recorded (simulated).",
-      variant: "destructive",
+      variant: "destructive", // This implies a destructive action, which might not be ideal. Consider 'default' or a custom variant.
     });
   };
 
@@ -32,12 +31,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">Welcome back! Here's an overview of your activities.</p>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" onClick={handlePunchIn}>
-                <LogIn className="mr-2 h-4 w-4" /> Punch In
-            </Button>
-            <Button variant="outline" onClick={handlePunchOut}> {/* Removed color="destructive" as it's not a standard prop for ShadCN Button, variant handles this */}
-                <LogOut className="mr-2 h-4 w-4" /> Punch Out
-            </Button>
+            {/* Punch In/Out buttons moved to My Attendance card */}
             <Button asChild>
                 <Link href="/tasks/new">
                     <PlusCircle className="mr-2 h-4 w-4" /> Log New Task
@@ -59,8 +53,18 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">
               Total hours logged today
             </p>
-            <Button variant="outline" size="sm" className="mt-4 w-full" asChild>
-              <Link href="/attendance">View Attendance Log</Link>
+            
+            <div className="mt-4 flex gap-2">
+              <Button variant="outline" onClick={handlePunchIn} className="flex-1">
+                <LogIn className="mr-2 h-4 w-4" /> Punch In
+              </Button>
+              <Button variant="outline" onClick={handlePunchOut} className="flex-1">
+                <LogOut className="mr-2 h-4 w-4" /> Punch Out
+              </Button>
+            </div>
+
+            <Button variant="link" size="sm" className="mt-2 w-full justify-center text-sm" asChild>
+              <Link href="/attendance">View Full Attendance Log</Link>
             </Button>
           </CardContent>
         </Card>
@@ -117,4 +121,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
