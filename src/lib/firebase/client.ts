@@ -25,16 +25,17 @@ if (typeof window !== 'undefined') {
            value === 'your-project-id' ||
            value === 'your-messaging-sender-id' ||
            value === 'your-app-id' ||
-           value === 'AIzaSyYOUR_API_KEY' || // Generic API key placeholder
-           (key === 'apiKey' && (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "AIzaSyCCPqUORirkoc5nxplht0CKTKkefyai7mY_PLACEHOLDER")); // More specific for initial setup
+           value === 'AIzaSyYOUR_API_KEY' || 
+           (key === 'apiKey' && (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "AIzaSyCCPqUORirkoc5nxplht0CKTKkefyai7mY_PLACEHOLDER" || process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "AIzaSyCCPqUORirkoc5nxplht0CKTKkefyai7mY"));
   });
 
-  if (missingKeys.length > 0 || !clientFirebaseConfig.apiKey || clientFirebaseConfig.apiKey === "AIzaSyCCPqUORirkoc5nxplht0CKTKkefyai7mY_PLACEHOLDER") {
+  if (missingKeys.length > 0 || !clientFirebaseConfig.apiKey || clientFirebaseConfig.apiKey === "AIzaSyCCPqUORirkoc5nxplht0CKTKkefyai7mY_PLACEHOLDER" || clientFirebaseConfig.apiKey === "AIzaSyCCPqUORirkoc5nxplht0CKTKkefyai7mY") {
     console.warn(
-      `Firebase client configuration is missing, uses placeholder values, or the default API key is still in use for: ${missingKeys.join(', ') || 'API Key'}. ` +
-      `Please ensure these (e.g., NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, NEXT_PUBLIC_FIREBASE_PROJECT_ID) are correctly set in your .env or .env.local file. ` +
+      `Firebase client configuration is missing, uses placeholder values, or an invalid API key is in use for: ${missingKeys.join(', ') || 'API Key/Project Settings'}. ` +
+      `Please ensure all Firebase configuration variables (e.g., NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, NEXT_PUBLIC_FIREBASE_PROJECT_ID) are correctly set in your .env or .env.local file. ` +
       `Firebase features, including Google Sign-In, may not work correctly until these are configured. ` +
-      `The Firebase API key is distinct from an OAuth Client ID.`
+      `The Firebase API key is distinct from an OAuth Client ID. ` +
+      `Also, verify in the Firebase Console (console.firebase.google.com) that your project (ID: ${clientFirebaseConfig.projectId || 'Not Set'}) exists, the Project ID matches your settings, and the required authentication providers (e.g., Google) are enabled.`
     );
   }
 }
