@@ -6,7 +6,7 @@ import { INITIAL_EMPLOYEES, INITIAL_TASKS, INITIAL_ATTENDANCE_RECORDS } from '@/
 import type { UpdateEmployeeFormValues } from './schemas/employee';
 import type { LogSalaryPaymentFormValues, RecordSalaryAdvanceFormValues } from './schemas/finance';
 import { format } from 'date-fns';
-import { adminDb, AdminTimestamp } from './firebase'; 
+import { adminDb, AdminTimestamp } from './firebase/admin'; // Updated import path
 
 const EMPLOYEES_COLLECTION = 'employees';
 const TASKS_COLLECTION = 'tasks';
@@ -17,7 +17,7 @@ const SALARY_ADVANCES_COLLECTION = 'salaryAdvances';
 // --- Seeding Functions ---
 async function seedInitialData<T extends { id: string }>(collectionName: string, initialData: T[]): Promise<void> {
   if (!adminDb) {
-    console.error("Admin DB not initialized. Skipping seeding for collection:", collectionName);
+    console.warn("Admin DB not initialized. Skipping seeding for collection:", collectionName);
     return;
   }
   try {
@@ -25,7 +25,7 @@ async function seedInitialData<T extends { id: string }>(collectionName: string,
     const snapshot = await collectionRef.limit(1).get();
     
     if (snapshot.empty) {
-      console.log(`Collection '${collectionName}' is empty. Seeding initial data...`);
+      // console.log(`Collection '${collectionName}' is empty. Seeding initial data...`);
       const batch = adminDb.batch();
       initialData.forEach(item => {
         const { id, ...itemData } = item; // Destructure id from item
@@ -33,7 +33,7 @@ async function seedInitialData<T extends { id: string }>(collectionName: string,
         batch.set(docRef, itemData);
       });
       await batch.commit();
-      console.log(`Initial data for '${collectionName}' seeded.`);
+      // console.log(`Initial data for '${collectionName}' seeded.`);
     } else {
       // console.log(`Collection '${collectionName}' already has data. Skipping seeding.`);
     }
