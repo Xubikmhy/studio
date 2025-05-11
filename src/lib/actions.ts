@@ -24,10 +24,10 @@ import {
     getSalaryPaymentsFromStore,
     addSalaryAdvanceToStore,
     getSalaryAdvancesFromStore,
-} from "./data-store"; // Ensure this path is correct
+} from "./data-store";
 import type { EmployeeProfile, Task, AttendanceRecord, SalaryPayment, SalaryAdvance } from "./types";
 import { format } from 'date-fns';
-import { CURRENT_USER_DATA } from "./constants"; // For isAdmin checks and default user values
+import { CURRENT_USER_DATA } from "./constants";
 
 
 // --- Google Sign-In Action ---
@@ -45,12 +45,13 @@ export async function processGoogleSignIn(userData: {
   photoURL: string | null;
 }): Promise<GoogleSignInResult> {
   if (!userData.uid || !userData.email) {
-    return { success: false, message: "Google Sign-In failed: Missing UID or Email." };
+    return { success: false, message: "Google Sign-In failed: Missing UID or Email from Google." };
   }
 
   try {
-    const existingEmployee = await findEmployeeByUidOrEmail(userData.uid, userData.email);
-    
+    // Determine if user exists *before* upsert for a more accurate welcome message.
+    const isExistingUser = !!(await findEmployeeByUidOrEmail(userData.uid, userData.email));
+
     const employeeData = {
       uid: userData.uid,
       name: userData.displayName,
@@ -60,18 +61,28 @@ export async function processGoogleSignIn(userData: {
 
     const employeeProfile = await addOrUpdateGoogleUserAsEmployee(employeeData);
 
-    // TODO: Here you would typically set a session cookie or token for the user
-    // For now, we're just creating/updating the employee record.
+    if (!employeeProfile) {
+        // This case should ideally not happen if addOrUpdateGoogleUserAsEmployee always returns a profile or throws
+        return { success: false, message: "Failed to create or update employee profile during Google Sign-In." };
+    }
 
-    return { 
-      success: true, 
-      message: existingEmployee ? "Welcome back!" : "Account created successfully!", 
+    return {
+      success: true,
+      message: isExistingUser ? "Welcome back! Signed in successfully." : "Account created and signed in successfully!",
       employee: employeeProfile,
-      redirectTo: "/dashboard" // Or based on role
+      redirectTo: "/dashboard"
     };
   } catch (error) {
     console.error("Error processing Google Sign-In:", error);
-    return { success: false, message: "Server error during Google Sign-In." };
+    let clientMessage = "Server error during Google Sign-In. Please check server logs and Firebase setup, then try again later.";
+    if (error instanceof Error) {
+        if (error.message.includes("Firestore")) {
+            clientMessage = "Error communicating with the database during sign-in. Please try again later.";
+        } else if (error.message.includes("addOrUpdateGoogleUserAsEmployee")) {
+            clientMessage = "Problem processing your user profile. Please contact support.";
+        }
+    }
+    return { success: false, message: clientMessage };
   }
 }
 
@@ -81,7 +92,11 @@ export async function handleCreateEmployee(
   prevState: CreateEmployeeState,
   formData: FormData
 ): Promise<CreateEmployeeState> {
-  // TODO: Add admin role check here if only admins can create employees
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || currentUser.role !== 'admin') {
+    return { message: "Unauthorized: Only admins can create employees.", errors: null, success: false };
+  }
+
   const validatedFields = CreateEmployeeSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -99,7 +114,6 @@ export async function handleCreateEmployee(
   }
 
   try {
-    // Check if email already exists
     const existingEmployeeByEmail = await findEmployeeByUidOrEmail('', validatedFields.data.email);
     if (existingEmployeeByEmail) {
         return {
@@ -125,7 +139,11 @@ export async function handleCreateEmployee(
 }
 
 export async function fetchEmployees(): Promise<EmployeeProfile[]> {
-  // TODO: Add admin role check here if only admins can fetch all employees
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || currentUser.role !== 'admin') {
+    console.warn("Unauthorized attempt to fetch all employees by non-admin.");
+    return []; // Or throw an error
+  }
   try {
     return await getEmployeesFromStore();
   } catch (error) {
@@ -135,7 +153,11 @@ export async function fetchEmployees(): Promise<EmployeeProfile[]> {
 }
 
 export async function fetchEmployeeById(id: string): Promise<EmployeeProfile | null> {
-  // TODO: Add admin role check or check if user is fetching their own profile
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== id)) {
+     console.warn(`Unauthorized attempt to fetch employee ${id}.`);
+     return null; // Or throw an error
+  }
   try {
     return await getEmployeeByIdFromStore(id);
   } catch (error) {
@@ -149,7 +171,11 @@ export async function handleUpdateEmployee(
   prevState: UpdateEmployeeState,
   formData: FormData
 ): Promise<UpdateEmployeeState> {
-  // TODO: Add admin role check here
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || currentUser.role !== 'admin') {
+    return { message: "Unauthorized: Only admins can update employees.", errors: null, success: false, employeeId };
+  }
+
   const validatedFields = UpdateEmployeeSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -170,7 +196,6 @@ export async function handleUpdateEmployee(
   try {
     const currentEmployee = await getEmployeeByIdFromStore(employeeId);
     if (currentEmployee && currentEmployee.email !== validatedFields.data.email) {
-      // Check if new email is already taken by another employee
       const existingEmployeeByEmail = await findEmployeeByUidOrEmail('', validatedFields.data.email);
       if (existingEmployeeByEmail && existingEmployeeByEmail.id !== employeeId) {
           return {
@@ -209,7 +234,13 @@ export async function handleUpdateEmployee(
 }
 
 export async function deleteEmployee(employeeId: string): Promise<{ success: boolean; message: string }> {
-    // TODO: Add admin role check here
+    const currentUser = await getCurrentAuthenticatedUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+      return { success: false, message: "Unauthorized: Only admins can delete employees." };
+    }
+    if (currentUser.id === employeeId) {
+      return { success: false, message: "Admins cannot delete their own account through this action."};
+    }
     try {
         const success = await deleteEmployeeFromStore(employeeId);
         if (success) {
@@ -227,8 +258,11 @@ export async function handleCreateTask(
   prevState: CreateTaskState,
   formData: FormData
 ): Promise<CreateTaskState> {
-  // No specific admin check needed here, as employees can create tasks for themselves.
-  // If admin assigns to others, that's handled by form values.
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser) {
+    return { message: "Unauthorized: You must be logged in to create tasks.", errors: null, success: false };
+  }
+
   const validatedFields = CreateTaskSchema.safeParse({
     taskName: formData.get("taskName"),
     description: formData.get("description"),
@@ -245,6 +279,21 @@ export async function handleCreateTask(
       success: false,
     };
   }
+  
+  // If user is not admin, they can only assign tasks to themselves and their team
+  if (currentUser.role !== 'admin') {
+    if (validatedFields.data.assignedTo !== currentUser.name || validatedFields.data.team !== currentUser.team) {
+      return {
+        message: "Employees can only create tasks for themselves within their own team.",
+        errors: { 
+            assignedTo: validatedFields.data.assignedTo !== currentUser.name ? ["Cannot assign to other users."] : undefined,
+            team: validatedFields.data.team !== currentUser.team ? ["Cannot assign to other teams."] : undefined,
+         },
+        success: false,
+      };
+    }
+  }
+
 
   try {
     await addTaskToStore(validatedFields.data);
@@ -264,7 +313,11 @@ export async function handleCreateTask(
 }
 
 export async function fetchTasks(): Promise<Task[]> {
-   // TODO: Add admin role check here if only admins can fetch all tasks
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || currentUser.role !== 'admin') {
+    console.warn("Unauthorized attempt to fetch all tasks by non-admin.");
+    return []; // Or throw an error
+  }
   try {
     return await getTasksFromStore();
   } catch (error) {
@@ -273,36 +326,50 @@ export async function fetchTasks(): Promise<Task[]> {
   }
 }
 
-export async function fetchUserTasks(userName: string): Promise<Task[]> {
-  // No specific admin check needed if users fetch their own tasks.
-  // Ensure 'userName' matches the authenticated user if not admin.
+export async function fetchUserTasks(employeeIdForTasks: string): Promise<Task[]> {
+  const currentUser = await getCurrentAuthenticatedUser();
+   if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== employeeIdForTasks)) {
+     // If not admin, user can only fetch their own tasks by ID.
+     // The component calls this with currentUser.id (or name previously). Let's stick to ID.
+     console.warn(`Unauthorized attempt to fetch tasks for user ${employeeIdForTasks} by ${currentUser?.id}.`);
+     return [];
+   }
   try {
-    return await getTasksForUserFromStore(userName);
+    // Find employee by ID to get their name for task lookup if tasks are stored by name
+    const employee = await getEmployeeByIdFromStore(employeeIdForTasks);
+    if (!employee) return [];
+    return await getTasksForUserFromStore(employee.name);
   } catch (error) {
-    console.error(`Failed to fetch tasks for user ${userName}:`, error);
+    console.error(`Failed to fetch tasks for user ${employeeIdForTasks}:`, error);
     return [];
   }
 }
 
 // --- Attendance Actions ---
-// For punchIn and punchOut, employeeId and employeeName should ideally come from the authenticated user session.
-// For now, CURRENT_USER_DATA is used in the component calling these.
-export async function punchIn(employeeId: string, employeeName: string): Promise<{ success: boolean; message: string; record?: AttendanceRecord | null }> {
+export async function punchIn(): Promise<{ success: boolean; message: string; record?: AttendanceRecord | null }> {
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser) {
+    return { success: false, message: "Unauthorized: You must be logged in." };
+  }
   try {
-    const record = await addOrUpdateAttendanceRecordStore(employeeId, employeeName, 'punch-in');
+    const record = await addOrUpdateAttendanceRecordStore(currentUser.id, currentUser.name, 'punch-in');
     if (record) {
       return { success: true, message: "Punched in successfully.", record };
     }
-    return { success: false, message: "Already punched in today or error." };
+    return { success: false, message: "Already punched in today or punch-in error." };
   } catch (error) {
     console.error("Punch in error:", error);
     return { success: false, message: "Server error during punch in." };
   }
 }
 
-export async function punchOut(employeeId: string, employeeName: string): Promise<{ success: boolean; message: string; record?: AttendanceRecord | null }> {
+export async function punchOut(): Promise<{ success: boolean; message: string; record?: AttendanceRecord | null }> {
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser) {
+    return { success: false, message: "Unauthorized: You must be logged in." };
+  }
   try {
-    const record = await addOrUpdateAttendanceRecordStore(employeeId, employeeName, 'punch-out');
+    const record = await addOrUpdateAttendanceRecordStore(currentUser.id, currentUser.name, 'punch-out');
      if (record && record.checkOut) {
       return { success: true, message: "Punched out successfully.", record };
     }
@@ -314,7 +381,11 @@ export async function punchOut(employeeId: string, employeeName: string): Promis
 }
 
 export async function fetchAttendanceRecords(): Promise<AttendanceRecord[]> {
-  // TODO: Add admin role check here
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || currentUser.role !== 'admin') {
+     console.warn("Unauthorized attempt to fetch all attendance by non-admin.");
+     return [];
+  }
   try {
     return await getAttendanceRecordsFromStore();
   } catch (error) {
@@ -324,7 +395,11 @@ export async function fetchAttendanceRecords(): Promise<AttendanceRecord[]> {
 }
 
 export async function fetchUserAttendanceRecords(employeeId: string): Promise<AttendanceRecord[]> {
-   // Ensure 'employeeId' matches the authenticated user if not admin.
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== employeeId)) {
+      console.warn(`Unauthorized attempt to fetch attendance for ${employeeId} by non-admin/non-owner.`);
+      return [];
+  }
   try {
     return await getAttendanceRecordsForUserFromStore(employeeId);
   } catch (error) {
@@ -334,7 +409,11 @@ export async function fetchUserAttendanceRecords(employeeId: string): Promise<At
 }
 
 export async function fetchTodaysUserAttendance(employeeId: string): Promise<AttendanceRecord | null> {
-    // Ensure 'employeeId' matches the authenticated user.
+    const currentUser = await getCurrentAuthenticatedUser();
+    if (!currentUser || currentUser.id !== employeeId ) { // Any user can fetch their own. Admin specific checks might be needed elsewhere.
+        console.warn(`Attempt to fetch today's attendance for ${employeeId} by unauthorized user ${currentUser?.id}.`);
+        return null;
+    }
     try {
         return await getTodaysAttendanceForUserFromStore(employeeId);
     } catch (error) {
@@ -345,7 +424,11 @@ export async function fetchTodaysUserAttendance(employeeId: string): Promise<Att
 
 // --- Finance Actions ---
 export async function fetchSalaryPayments(): Promise<SalaryPayment[]> {
-    // TODO: Add admin role check here
+    const currentUser = await getCurrentAuthenticatedUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+       console.warn("Unauthorized attempt to fetch salary payments by non-admin.");
+       return [];
+    }
     try {
         return await getSalaryPaymentsFromStore();
     } catch (error) {
@@ -358,7 +441,10 @@ export async function handleLogSalaryPayment(
   prevState: LogSalaryPaymentState,
   formData: FormData
 ): Promise<LogSalaryPaymentState> {
-  // TODO: Add admin role check here
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || currentUser.role !== 'admin') {
+    return { message: "Unauthorized: Only admins can log salary payments.", errors: null, success: false };
+  }
   const paymentDate = formData.get("paymentDate");
   const validatedFields = LogSalaryPaymentSchema.safeParse({
     employeeId: formData.get("employeeId"),
@@ -393,7 +479,11 @@ export async function handleLogSalaryPayment(
 }
 
 export async function fetchSalaryAdvances(): Promise<SalaryAdvance[]> {
-    // TODO: Add admin role check here
+    const currentUser = await getCurrentAuthenticatedUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+       console.warn("Unauthorized attempt to fetch salary advances by non-admin.");
+       return [];
+    }
     try {
         return await getSalaryAdvancesFromStore();
     } catch (error) {
@@ -406,7 +496,10 @@ export async function handleRecordSalaryAdvance(
   prevState: RecordSalaryAdvanceState,
   formData: FormData
 ): Promise<RecordSalaryAdvanceState> {
-  // TODO: Add admin role check here
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || currentUser.role !== 'admin') {
+    return { message: "Unauthorized: Only admins can record salary advances.", errors: null, success: false };
+  }
   const advanceDate = formData.get("advanceDate");
   const validatedFields = RecordSalaryAdvanceSchema.safeParse({
     employeeId: formData.get("employeeId"),
@@ -440,30 +533,40 @@ export async function handleRecordSalaryAdvance(
   }
 }
 
-// Helper function to get current authenticated user (placeholder)
-// In a real app, this would involve reading session cookies or tokens
-// and verifying them, then fetching user data from your database.
+
 async function getCurrentAuthenticatedUser(): Promise<EmployeeProfile | null> {
-  // This is a placeholder. Replace with actual authentication logic.
-  // For example, you might decode a JWT from a cookie.
-  // const session = await getSession(); // Fictional function
-  // if (session?.user?.id) {
-  //   return await getEmployeeByIdFromStore(session.user.id);
-  // }
-  // For now, returning CURRENT_USER_DATA to maintain existing behavior where applicable
-  // but this needs to be replaced.
-  // To avoid breaking server actions that don't rely on it directly yet, we'll just log.
-  console.warn("getCurrentAuthenticatedUser is a placeholder and needs to be implemented with real auth.");
-  return CURRENT_USER_DATA; // This is NOT secure for production and is only for local dev continuity.
+  // This is a placeholder. In a real app, you would get this from Firebase Auth session
+  // For now, it uses the hardcoded CURRENT_USER_DATA for simulation
+  // This should be replaced with actual Firebase Auth server-side session management.
+  // For example, by verifying an ID token passed from the client.
+  // console.warn("getCurrentAuthenticatedUser is using simulated data (CURRENT_USER_DATA). Replace with actual auth logic.");
+  
+  // To make this slightly more robust for simulation, let's assume CURRENT_USER_DATA reflects who "logged in"
+  // and try to fetch their latest profile from the "database" (Firestore store)
+  if (CURRENT_USER_DATA && CURRENT_USER_DATA.id) {
+    try {
+      const userFromDb = await getEmployeeByIdFromStore(CURRENT_USER_DATA.id);
+      if (userFromDb) {
+        // console.log("Simulated getCurrentAuthenticatedUser, fetched from DB:", userFromDb.name, userFromDb.role);
+        return userFromDb;
+      }
+      // console.warn("Simulated user from CURRENT_USER_DATA not found in DB. Falling back to CURRENT_USER_DATA itself.");
+      return CURRENT_USER_DATA; // Fallback if not in DB (e.g. during initial seeding phases)
+    } catch (e) {
+      // console.error("Error fetching simulated user from DB in getCurrentAuthenticatedUser:", e);
+      return CURRENT_USER_DATA; // Fallback on error
+    }
+  }
+  return null;
 }
 
-// Example of how an action might be protected:
+
 export async function adminOnlyActionExample() {
   const user = await getCurrentAuthenticatedUser();
   if (!user || user.role !== 'admin') {
     throw new Error("Unauthorized: Admin access required.");
   }
-  // Proceed with admin-specific logic
   console.log("Admin action executed by:", user.name);
   return { success: true, message: "Admin action completed." };
 }
+
