@@ -2,7 +2,7 @@
 import { initializeApp, getApps, getApp as getClientSideApp, type FirebaseApp } from "firebase/app";
 import { getAuth as getClientSideAuth, type Auth as ClientSideAuth } from "firebase/auth";
 import * as admin from 'firebase-admin';
-import { getFirestore as getAdminFirestore, Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
+import { getFirestore as getAdminFirestore, Timestamp as AdminSDKTimestamp } from 'firebase-admin/firestore'; // Renamed Timestamp to avoid conflict
 
 // Client-side Firebase configuration
 const clientFirebaseConfig = {
@@ -16,42 +16,51 @@ const clientFirebaseConfig = {
 
 // Initialize Client-side Firebase app
 let app: FirebaseApp;
-// Check if an app with the default name '[DEFAULT]' already exists
 if (!getApps().find(existingApp => existingApp.name === '[DEFAULT]')) {
   app = initializeApp(clientFirebaseConfig);
 } else {
-  app = getClientSideApp(); // Get the default app
+  app = getClientSideApp(); 
 }
 const auth: ClientSideAuth = getClientSideAuth(app);
 
 // Server-side Firebase Admin SDK initialization
-// This block will only execute effectively on the server.
 if (!admin.apps.length) {
   const serviceAccountKeyJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_JSON;
-  if (serviceAccountKeyJson && serviceAccountKeyJson !== 'Paste your service account JSON content here as a single-line string') {
+  
+  if (serviceAccountKeyJson && serviceAccountKeyJson.trim() !== '' && serviceAccountKeyJson !== 'Paste your service account JSON content here as a single-line string') {
     try {
         const serviceAccount = JSON.parse(serviceAccountKeyJson);
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
         });
-        // console.log("Firebase Admin SDK initialized with service account key.");
+        console.log("Firebase Admin SDK initialized successfully using service account key from environment variable.");
     } catch (e) {
         console.error("Error parsing FIREBASE_SERVICE_ACCOUNT_KEY_JSON. Ensure it's a valid JSON string:", e);
-        console.log("Attempting to initialize Firebase Admin SDK with default credentials as fallback.");
+        console.log("Attempting to initialize Firebase Admin SDK with default credentials as fallback due to parsing error.");
+        try {
+            admin.initializeApp({
+              credential: admin.credential.applicationDefault(),
+            });
+             console.log("Firebase Admin SDK initialized with default credentials (fallback).");
+        } catch (defaultInitError) {
+            console.error("Failed to initialize Firebase Admin SDK with default credentials as well:", defaultInitError);
+        }
+    }
+  } else {
+    console.log("FIREBASE_SERVICE_ACCOUNT_KEY_JSON not found, is empty, or is placeholder. Attempting to initialize Firebase Admin SDK with default credentials.");
+    try {
         admin.initializeApp({
           credential: admin.credential.applicationDefault(),
         });
+        console.log("Firebase Admin SDK initialized with default credentials.");
+    } catch (defaultInitError) {
+        console.error("Failed to initialize Firebase Admin SDK with default credentials:", defaultInitError);
     }
-  } else {
-    // Fallback for environments like Firebase Hosting with Functions, Cloud Run, or local dev with GOOGLE_APPLICATION_CREDENTIALS
-    // console.log("FIREBASE_SERVICE_ACCOUNT_KEY_JSON not found or is placeholder. Attempting to initialize Firebase Admin SDK with default credentials.");
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
   }
 }
 
-const adminDb = getAdminFirestore();
-const adminAuthInstance = admin.auth(); // Renamed to avoid conflict with client 'auth'
+const adminDb = admin.apps.length ? getAdminFirestore() : null;
+const adminAuthInstance = admin.apps.length ? admin.auth() : null; 
 
-export { app, auth, adminDb, adminAuthInstance as adminAuth, AdminTimestamp };
+// Export AdminTimestamp directly
+export { app, auth, adminDb, adminAuthInstance as adminAuth, AdminSDKTimestamp as AdminTimestamp };
