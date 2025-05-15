@@ -1,12 +1,12 @@
 
 'use server';
 
-import type { EmployeeProfile, Task, AttendanceRecord, SalaryPayment, SalaryAdvance, Team, UserRole, TaskStatus, TaskPriority } from '@/lib/types'; 
-import { INITIAL_EMPLOYEES, INITIAL_TASKS, INITIAL_ATTENDANCE_RECORDS } from '@/lib/constants'; 
+import type { EmployeeProfile, Task, AttendanceRecord, SalaryPayment, SalaryAdvance, Team, UserRole, TaskStatus, TaskPriority } from '@/lib/types';
+import { INITIAL_EMPLOYEES, INITIAL_TASKS, INITIAL_ATTENDANCE_RECORDS } from '@/lib/constants';
 import type { UpdateEmployeeFormValues } from './schemas/employee';
 import type { LogSalaryPaymentFormValues, RecordSalaryAdvanceFormValues } from './schemas/finance';
 import { format } from 'date-fns';
-import { adminDb, AdminTimestamp } from './firebase/admin'; // Updated import path
+import { adminDb, AdminTimestamp } from './firebase/admin';
 
 const EMPLOYEES_COLLECTION = 'employees';
 const TASKS_COLLECTION = 'tasks';
@@ -23,33 +23,26 @@ async function seedInitialData<T extends { id: string }>(collectionName: string,
   try {
     const collectionRef = adminDb.collection(collectionName);
     const snapshot = await collectionRef.limit(1).get();
-    
+
     if (snapshot.empty) {
-      // console.log(`Collection '${collectionName}' is empty. Seeding initial data...`);
       const batch = adminDb.batch();
       initialData.forEach(item => {
-        const { id, ...itemData } = item; // Destructure id from item
-        const docRef = collectionRef.doc(id); // Use predefined ID for seeding consistency
+        const { id, ...itemData } = item;
+        const docRef = collectionRef.doc(id);
         batch.set(docRef, itemData);
       });
       await batch.commit();
-      // console.log(`Initial data for '${collectionName}' seeded.`);
-    } else {
-      // console.log(`Collection '${collectionName}' already has data. Skipping seeding.`);
     }
   } catch (error) {
     console.error(`Error seeding data for collection ${collectionName}:`, error);
   }
 }
 
-// Initialize seeding (runs once if db not initialized before this point)
 if (adminDb) {
     const seedPromises = [
         seedInitialData<EmployeeProfile>(EMPLOYEES_COLLECTION, INITIAL_EMPLOYEES),
         seedInitialData<Task>(TASKS_COLLECTION, INITIAL_TASKS),
         seedInitialData<AttendanceRecord>(ATTENDANCE_COLLECTION, INITIAL_ATTENDANCE_RECORDS),
-        // seedInitialData<SalaryPayment>(SALARY_PAYMENTS_COLLECTION, []), // Example: Add initial payments if any
-        // seedInitialData<SalaryAdvance>(SALARY_ADVANCES_COLLECTION, []), // Example: Add initial advances if any
     ];
     Promise.all(seedPromises).catch(console.error);
 }
@@ -92,11 +85,11 @@ export async function addEmployeeToStore(
   employeeData: Omit<EmployeeProfile, 'id' | 'avatar' | 'role' | 'uid'> & { roleInternal: string }
 ): Promise<EmployeeProfile> {
   if (!adminDb) throw new Error("Admin DB not initialized for addEmployeeToStore");
-  
-  const newDocRef = adminDb.collection(EMPLOYEES_COLLECTION).doc(); // Firestore generates ID
+
+  const newDocRef = adminDb.collection(EMPLOYEES_COLLECTION).doc();
   const newEmployee: EmployeeProfile = {
-    id: newDocRef.id, 
-    uid: `manual-uid-${newDocRef.id}-${Math.random().toString(36).substring(7)}`,
+    id: newDocRef.id,
+    uid: `manual-uid-${newDocRef.id}-${Math.random().toString(36).substring(7)}`, // Placeholder UID for non-Google users
     name: employeeData.name,
     email: employeeData.email,
     avatar: `https://picsum.photos/seed/${encodeURIComponent(employeeData.name)}/100/100`,
@@ -123,55 +116,10 @@ export async function updateEmployeeInStore(id: string, data: UpdateEmployeeForm
     team: data.team,
     roleInternal: data.roleInternal,
     baseSalary: data.baseSalary,
-    // Automatically determine role based on team and roleInternal if needed, or keep existing role
     role: (data.team === "Management Team" && data.roleInternal.toLowerCase().includes("manager")) ? 'admin' : existingData.role || 'employee',
   };
   await docRef.update(updateData);
   return { id, ...updateData };
-}
-
-export async function addOrUpdateGoogleUserAsEmployee(googleUserData: {
-  uid: string;
-  name: string | null;
-  email: string | null;
-  avatar: string | null;
-}): Promise<EmployeeProfile> {
-  if (!adminDb) throw new Error("Admin DB not initialized for addOrUpdateGoogleUserAsEmployee");
-  const employeesRef = adminDb.collection(EMPLOYEES_COLLECTION);
-  let query = employeesRef.where('uid', '==', googleUserData.uid);
-  let snapshot = await query.get();
-
-  if (snapshot.empty && googleUserData.email) {
-    query = employeesRef.where('email', '==', googleUserData.email);
-    snapshot = await query.get();
-  }
-
-  if (!snapshot.empty) { 
-    const doc = snapshot.docs[0];
-    const updateData: Partial<EmployeeProfile> = {
-      name: googleUserData.name || doc.data().name,
-      email: googleUserData.email || doc.data().email,
-      avatar: googleUserData.avatar || doc.data().avatar,
-      uid: googleUserData.uid, 
-    };
-    await doc.ref.update(updateData);
-    return { id: doc.id, ...doc.data(), ...updateData } as EmployeeProfile;
-  } else { 
-    const newDocRef = employeesRef.doc();
-    const newEmployee: EmployeeProfile = {
-      id: newDocRef.id,
-      uid: googleUserData.uid,
-      name: googleUserData.name || "New User",
-      email: googleUserData.email || `user-${newDocRef.id}@example.com`,
-      avatar: googleUserData.avatar || `https://picsum.photos/seed/${encodeURIComponent(googleUserData.name || 'New User')}/100/100`,
-      team: "Unassigned" as Team,
-      roleInternal: "Employee",
-      role: 'employee',
-      baseSalary: 30000, // Default base salary
-    };
-    await newDocRef.set(newEmployee);
-    return newEmployee;
-  }
 }
 
 export async function deleteEmployeeFromStore(employeeId: string): Promise<boolean> {
@@ -196,7 +144,7 @@ export async function deleteEmployeeFromStore(employeeId: string): Promise<boole
 
   const advancesSnapshot = await adminDb.collection(SALARY_ADVANCES_COLLECTION).where('employeeId', '==', employeeId).get();
   advancesSnapshot.forEach(doc => batch.delete(doc.ref));
-  
+
   await batch.commit();
   return true;
 }
@@ -239,12 +187,12 @@ export async function getAttendanceRecordsForUserFromStore(employeeId: string): 
 }
 
 export async function addOrUpdateAttendanceRecordStore(
-  employeeId: string, 
+  employeeId: string,
   employeeName: string,
   type: 'punch-in' | 'punch-out'
 ): Promise<AttendanceRecord | null> {
   if (!adminDb) throw new Error("Admin DB not initialized for addOrUpdateAttendanceRecordStore");
-  const today = new Date().toISOString().split('T')[0]; 
+  const today = new Date().toISOString().split('T')[0];
   const now = new Date();
   const currentTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
@@ -255,9 +203,9 @@ export async function addOrUpdateAttendanceRecordStore(
   let recordToReturn: AttendanceRecord | null = null;
 
   if (type === 'punch-in') {
-    if (!snapshot.empty && snapshot.docs[0].data().checkIn) { 
+    if (!snapshot.empty && snapshot.docs[0].data().checkIn) {
         const existingRecord = docToDataType<AttendanceRecord>(snapshot.docs[0]);
-        if (!existingRecord.checkOut) return null; 
+        if (!existingRecord.checkOut) return null;
     }
     const newDocRef = attendanceRef.doc();
     const newRecord: AttendanceRecord = {
@@ -266,20 +214,20 @@ export async function addOrUpdateAttendanceRecordStore(
     };
     await newDocRef.set(newRecord);
     recordToReturn = newRecord;
-  } else { 
+  } else {
     if (snapshot.empty || !snapshot.docs[0].data().checkIn || snapshot.docs[0].data().checkOut) {
-      return null; 
+      return null;
     }
     const docToUpdate = snapshot.docs[0];
     const existingRecordData = docToUpdate.data() as AttendanceRecord;
-    
+
     const checkInTime = new Date(`${today} ${existingRecordData.checkIn}`);
-    const checkOutTime = new Date(`${today} ${currentTime}`); 
+    const checkOutTime = new Date(`${today} ${currentTime}`);
     let totalHoursStr: string | null = null;
 
     if (!isNaN(checkInTime.getTime()) && !isNaN(checkOutTime.getTime())) {
         let diffMs = checkOutTime.getTime() - checkInTime.getTime();
-        if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000; 
+        if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
 
         const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
         const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -287,7 +235,7 @@ export async function addOrUpdateAttendanceRecordStore(
     } else {
         totalHoursStr = "Error";
     }
-    
+
     const updatedRecordData = { checkOut: currentTime, totalHours: totalHoursStr };
     await docToUpdate.ref.update(updatedRecordData);
     recordToReturn = { ...existingRecordData, ...updatedRecordData, id: docToUpdate.id };
@@ -317,7 +265,7 @@ export async function addSalaryPaymentToStore(paymentData: LogSalaryPaymentFormV
   if (!adminDb) throw new Error("Admin DB not initialized for addSalaryPaymentToStore");
   const employee = await getEmployeeByIdFromStore(paymentData.employeeId);
   if (!employee) throw new Error("Employee not found for salary payment.");
-  
+
   const newDocRef = adminDb.collection(SALARY_PAYMENTS_COLLECTION).doc();
   const newPayment: SalaryPayment = {
     id: newDocRef.id,
@@ -350,7 +298,7 @@ export async function addSalaryAdvanceToStore(advanceData: RecordSalaryAdvanceFo
     amount: advanceData.amount,
     advanceDate: format(advanceData.advanceDate, "yyyy-MM-dd"),
     reason: advanceData.reason || "",
-    status: "Pending", // Default status
+    status: "Pending", 
   };
   await newDocRef.set(newAdvance);
   return newAdvance;

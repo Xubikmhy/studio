@@ -2,11 +2,11 @@
 // @ts-nocheck
 "use server";
 
-import { CreateTaskSchema, type CreateTaskState } from "@/lib/schemas/task"; 
+import { CreateTaskSchema, type CreateTaskState } from "@/lib/schemas/task";
 import { CreateEmployeeSchema, UpdateEmployeeSchema, type CreateEmployeeState, type UpdateEmployeeState } from "@/lib/schemas/employee";
 import { LogSalaryPaymentSchema, type LogSalaryPaymentState, RecordSalaryAdvanceSchema, type RecordSalaryAdvanceState } from "@/lib/schemas/finance";
-import { 
-    addEmployeeToStore, 
+import {
+    addEmployeeToStore,
     getEmployeesFromStore,
     getEmployeeByIdFromStore,
     updateEmployeeInStore,
@@ -17,8 +17,7 @@ import {
     getAttendanceRecordsFromStore,
     getAttendanceRecordsForUserFromStore,
     getTodaysAttendanceForUserFromStore,
-    addOrUpdateGoogleUserAsEmployee,
-    findEmployeeByUidOrEmail,
+    findEmployeeByUidOrEmail, // Kept for email lookup
     deleteEmployeeFromStore,
     addSalaryPaymentToStore,
     getSalaryPaymentsFromStore,
@@ -28,63 +27,6 @@ import {
 import type { EmployeeProfile, Task, AttendanceRecord, SalaryPayment, SalaryAdvance } from "./types";
 import { format } from 'date-fns';
 import { CURRENT_USER_DATA } from "./constants";
-
-
-// --- Google Sign-In Action ---
-interface GoogleSignInResult {
-  success: boolean;
-  message: string;
-  employee?: EmployeeProfile | null;
-  redirectTo?: string;
-}
-
-export async function processGoogleSignIn(userData: {
-  uid: string;
-  displayName: string | null;
-  email: string | null;
-  photoURL: string | null;
-}): Promise<GoogleSignInResult> {
-  if (!userData.uid || !userData.email) {
-    return { success: false, message: "Google Sign-In failed: Missing UID or Email from Google." };
-  }
-
-  try {
-    // Determine if user exists *before* upsert for a more accurate welcome message.
-    const isExistingUser = !!(await findEmployeeByUidOrEmail(userData.uid, userData.email));
-
-    const employeeData = {
-      uid: userData.uid,
-      name: userData.displayName,
-      email: userData.email,
-      avatar: userData.photoURL,
-    };
-
-    const employeeProfile = await addOrUpdateGoogleUserAsEmployee(employeeData);
-
-    if (!employeeProfile) {
-        // This case should ideally not happen if addOrUpdateGoogleUserAsEmployee always returns a profile or throws
-        return { success: false, message: "Failed to create or update employee profile during Google Sign-In." };
-    }
-
-    return {
-      success: true,
-      message: isExistingUser ? "Welcome back! Signed in successfully." : "Account created and signed in successfully!",
-      employee: employeeProfile,
-      redirectTo: "/dashboard"
-    };
-  } catch (error) {
-    console.error("Error processing Google Sign-In:", error);
-    let clientMessage = "Server error during Google Sign-In. Please check server logs and Firebase setup, then try again later.";
-    if (error instanceof Error) {
-        if (error.message.includes("Firestore")) {
-            clientMessage = "Error communicating with the database during sign-in. Please try again later.";
-        } else if (error.message.includes("addOrUpdateGoogleUserAsEmployee")) {
-            clientMessage = "Problem processing your user profile. Please contact support.";
-        }
-    }
-    return { success: false, message: clientMessage };
-  }
-}
 
 
 // --- Employee Actions ---
@@ -142,13 +84,13 @@ export async function fetchEmployees(): Promise<EmployeeProfile[]> {
   const currentUser = await getCurrentAuthenticatedUser();
   if (!currentUser || currentUser.role !== 'admin') {
     console.warn("Unauthorized attempt to fetch all employees by non-admin.");
-    return []; // Or throw an error
+    return []; 
   }
   try {
     return await getEmployeesFromStore();
   } catch (error) {
     console.error("Failed to fetch employees:", error);
-    return []; 
+    return [];
   }
 }
 
@@ -156,7 +98,7 @@ export async function fetchEmployeeById(id: string): Promise<EmployeeProfile | n
   const currentUser = await getCurrentAuthenticatedUser();
   if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== id)) {
      console.warn(`Unauthorized attempt to fetch employee ${id}.`);
-     return null; // Or throw an error
+     return null; 
   }
   try {
     return await getEmployeeByIdFromStore(id);
@@ -167,7 +109,7 @@ export async function fetchEmployeeById(id: string): Promise<EmployeeProfile | n
 }
 
 export async function handleUpdateEmployee(
-  employeeId: string, 
+  employeeId: string,
   prevState: UpdateEmployeeState,
   formData: FormData
 ): Promise<UpdateEmployeeState> {
@@ -279,13 +221,12 @@ export async function handleCreateTask(
       success: false,
     };
   }
-  
-  // If user is not admin, they can only assign tasks to themselves and their team
+
   if (currentUser.role !== 'admin') {
     if (validatedFields.data.assignedTo !== currentUser.name || validatedFields.data.team !== currentUser.team) {
       return {
         message: "Employees can only create tasks for themselves within their own team.",
-        errors: { 
+        errors: {
             assignedTo: validatedFields.data.assignedTo !== currentUser.name ? ["Cannot assign to other users."] : undefined,
             team: validatedFields.data.team !== currentUser.team ? ["Cannot assign to other teams."] : undefined,
          },
@@ -316,7 +257,7 @@ export async function fetchTasks(): Promise<Task[]> {
   const currentUser = await getCurrentAuthenticatedUser();
   if (!currentUser || currentUser.role !== 'admin') {
     console.warn("Unauthorized attempt to fetch all tasks by non-admin.");
-    return []; // Or throw an error
+    return []; 
   }
   try {
     return await getTasksFromStore();
@@ -329,13 +270,10 @@ export async function fetchTasks(): Promise<Task[]> {
 export async function fetchUserTasks(employeeIdForTasks: string): Promise<Task[]> {
   const currentUser = await getCurrentAuthenticatedUser();
    if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== employeeIdForTasks)) {
-     // If not admin, user can only fetch their own tasks by ID.
-     // The component calls this with currentUser.id (or name previously). Let's stick to ID.
      console.warn(`Unauthorized attempt to fetch tasks for user ${employeeIdForTasks} by ${currentUser?.id}.`);
      return [];
    }
   try {
-    // Find employee by ID to get their name for task lookup if tasks are stored by name
     const employee = await getEmployeeByIdFromStore(employeeIdForTasks);
     if (!employee) return [];
     return await getTasksForUserFromStore(employee.name);
@@ -410,7 +348,7 @@ export async function fetchUserAttendanceRecords(employeeId: string): Promise<At
 
 export async function fetchTodaysUserAttendance(employeeId: string): Promise<AttendanceRecord | null> {
     const currentUser = await getCurrentAuthenticatedUser();
-    if (!currentUser || currentUser.id !== employeeId ) { // Any user can fetch their own. Admin specific checks might be needed elsewhere.
+    if (!currentUser || currentUser.id !== employeeId ) { 
         console.warn(`Attempt to fetch today's attendance for ${employeeId} by unauthorized user ${currentUser?.id}.`);
         return null;
     }
@@ -535,26 +473,15 @@ export async function handleRecordSalaryAdvance(
 
 
 async function getCurrentAuthenticatedUser(): Promise<EmployeeProfile | null> {
-  // This is a placeholder. In a real app, you would get this from Firebase Auth session
-  // For now, it uses the hardcoded CURRENT_USER_DATA for simulation
-  // This should be replaced with actual Firebase Auth server-side session management.
-  // For example, by verifying an ID token passed from the client.
-  // console.warn("getCurrentAuthenticatedUser is using simulated data (CURRENT_USER_DATA). Replace with actual auth logic.");
-  
-  // To make this slightly more robust for simulation, let's assume CURRENT_USER_DATA reflects who "logged in"
-  // and try to fetch their latest profile from the "database" (Firestore store)
   if (CURRENT_USER_DATA && CURRENT_USER_DATA.id) {
     try {
       const userFromDb = await getEmployeeByIdFromStore(CURRENT_USER_DATA.id);
       if (userFromDb) {
-        // console.log("Simulated getCurrentAuthenticatedUser, fetched from DB:", userFromDb.name, userFromDb.role);
         return userFromDb;
       }
-      // console.warn("Simulated user from CURRENT_USER_DATA not found in DB. Falling back to CURRENT_USER_DATA itself.");
-      return CURRENT_USER_DATA; // Fallback if not in DB (e.g. during initial seeding phases)
+      return CURRENT_USER_DATA; 
     } catch (e) {
-      // console.error("Error fetching simulated user from DB in getCurrentAuthenticatedUser:", e);
-      return CURRENT_USER_DATA; // Fallback on error
+      return CURRENT_USER_DATA; 
     }
   }
   return null;
@@ -569,4 +496,3 @@ export async function adminOnlyActionExample() {
   console.log("Admin action executed by:", user.name);
   return { success: true, message: "Admin action completed." };
 }
-
