@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ListFilter, Download, Users, Loader2 } from "lucide-react";
+import { ListFilter, Download, Users, Loader2, PlusCircle } from "lucide-react"; // Added PlusCircle
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { CURRENT_USER_DATA } from "@/lib/constants";
 import type { AttendanceRecord } from "@/lib/types";
 import { fetchAttendanceRecords, fetchUserAttendanceRecords } from "@/lib/actions";
 import { arrayToCsv, downloadCsv } from "@/lib/csv-utils";
+import Link from "next/link"; // Added Link
 
 export default function AttendancePage() {
   const { toast } = useToast();
@@ -101,6 +102,13 @@ export default function AttendancePage() {
                 {isAdmin ? "View all employee check-ins, check-outs, and attendance history." : "View your daily check-ins, check-outs, and attendance history."}
                 </p>
             </div>
+             {isAdmin && (
+                <Button asChild disabled>
+                    <Link href="/admin/attendance/new">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Manually Add Record
+                    </Link>
+                </Button>
+            )}
         </div>
         <Card className="shadow-lg">
           <CardHeader>
@@ -130,6 +138,13 @@ export default function AttendancePage() {
               {isAdmin ? "View all employee check-ins, check-outs, and attendance history." : "View your daily check-ins, check-outs, and attendance history."}
             </p>
         </div>
+         {isAdmin && (
+            <Button asChild>
+                <Link href="/admin/attendance/new">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Manually Add Record
+                </Link>
+            </Button>
+        )}
       </div>
 
       <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">

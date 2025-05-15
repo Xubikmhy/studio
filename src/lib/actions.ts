@@ -5,6 +5,7 @@
 import { CreateTaskSchema, type CreateTaskState } from "@/lib/schemas/task";
 import { CreateEmployeeSchema, UpdateEmployeeSchema, type CreateEmployeeState, type UpdateEmployeeState } from "@/lib/schemas/employee";
 import { LogSalaryPaymentSchema, type LogSalaryPaymentState, RecordSalaryAdvanceSchema, type RecordSalaryAdvanceState } from "@/lib/schemas/finance";
+import { ManualAttendanceEntrySchema, type ManualAttendanceEntryState } from "@/lib/schemas/attendance"; // Added
 import {
     addEmployeeToStore,
     getEmployeesFromStore,
@@ -17,15 +18,17 @@ import {
     getAttendanceRecordsFromStore,
     getAttendanceRecordsForUserFromStore,
     getTodaysAttendanceForUserFromStore,
-    findEmployeeByUidOrEmail, // Kept for email lookup
+    findEmployeeByUidOrEmail, 
     deleteEmployeeFromStore,
     addSalaryPaymentToStore,
     getSalaryPaymentsFromStore,
     addSalaryAdvanceToStore,
     getSalaryAdvancesFromStore,
+    addManualAttendanceRecordToStore, // Added
+    deleteAttendanceRecordFromStore, // Added
 } from "./data-store";
 import type { EmployeeProfile, Task, AttendanceRecord, SalaryPayment, SalaryAdvance } from "./types";
-import { format } from 'date-fns';
+import { format as formatDateFns } from 'date-fns';
 import { CURRENT_USER_DATA } from "./constants";
 
 
@@ -56,7 +59,10 @@ export async function handleCreateEmployee(
   }
 
   try {
-    const existingEmployeeByEmail = await findEmployeeByUidOrEmail('', validatedFields.data.email);
+    // Check if employee with the same email already exists
+    const employees = await getEmployeesFromStore();
+    const existingEmployeeByEmail = employees.find(emp => emp.email === validatedFields.data.email);
+
     if (existingEmployeeByEmail) {
         return {
             message: `An employee with email "${validatedFields.data.email}" already exists.`,
@@ -81,11 +87,8 @@ export async function handleCreateEmployee(
 }
 
 export async function fetchEmployees(): Promise<EmployeeProfile[]> {
-  const currentUser = await getCurrentAuthenticatedUser();
-  if (!currentUser || currentUser.role !== 'admin') {
-    console.warn("Unauthorized attempt to fetch all employees by non-admin.");
-    return []; 
-  }
+  // No specific admin check here, as non-admins might need to list employees for tasks/assignment.
+  // Access control should be at the component/page level if needed for specific views.
   try {
     return await getEmployeesFromStore();
   } catch (error) {
@@ -137,16 +140,18 @@ export async function handleUpdateEmployee(
 
   try {
     const currentEmployee = await getEmployeeByIdFromStore(employeeId);
+    // Check if new email is already taken by another employee
     if (currentEmployee && currentEmployee.email !== validatedFields.data.email) {
-      const existingEmployeeByEmail = await findEmployeeByUidOrEmail('', validatedFields.data.email);
-      if (existingEmployeeByEmail && existingEmployeeByEmail.id !== employeeId) {
-          return {
-              message: `An employee with email "${validatedFields.data.email}" already exists.`,
-              errors: { email: ["Email already in use by another employee."] },
-              success: false,
-              employeeId,
-          };
-      }
+        const employees = await getEmployeesFromStore();
+        const existingEmployeeByEmail = employees.find(emp => emp.email === validatedFields.data.email && emp.id !== employeeId);
+        if (existingEmployeeByEmail) {
+            return {
+                message: `An employee with email "${validatedFields.data.email}" already exists.`,
+                errors: { email: ["Email already in use by another employee."] },
+                success: false,
+                employeeId,
+            };
+        }
     }
 
     const updatedEmployee = await updateEmployeeInStore(employeeId, validatedFields.data);
@@ -180,8 +185,8 @@ export async function deleteEmployee(employeeId: string): Promise<{ success: boo
     if (!currentUser || currentUser.role !== 'admin') {
       return { success: false, message: "Unauthorized: Only admins can delete employees." };
     }
-    if (currentUser.id === employeeId) {
-      return { success: false, message: "Admins cannot delete their own account through this action."};
+    if (currentUser.id === employeeId && INITIAL_EMPLOYEES.find(emp => emp.id === employeeId)?.email === 'admin@example.com') { // Prevent deleting the seed admin
+      return { success: false, message: "The primary admin account cannot be deleted."};
     }
     try {
         const success = await deleteEmployeeFromStore(employeeId);
@@ -267,18 +272,16 @@ export async function fetchTasks(): Promise<Task[]> {
   }
 }
 
-export async function fetchUserTasks(employeeIdForTasks: string): Promise<Task[]> {
+export async function fetchUserTasks(employeeNameForTasks: string): Promise<Task[]> {
   const currentUser = await getCurrentAuthenticatedUser();
-   if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== employeeIdForTasks)) {
-     console.warn(`Unauthorized attempt to fetch tasks for user ${employeeIdForTasks} by ${currentUser?.id}.`);
+   if (!currentUser || (currentUser.role !== 'admin' && currentUser.name !== employeeNameForTasks)) {
+     console.warn(`Unauthorized attempt to fetch tasks for user ${employeeNameForTasks} by ${currentUser?.id}.`);
      return [];
    }
   try {
-    const employee = await getEmployeeByIdFromStore(employeeIdForTasks);
-    if (!employee) return [];
-    return await getTasksForUserFromStore(employee.name);
+    return await getTasksForUserFromStore(employeeNameForTasks);
   } catch (error) {
-    console.error(`Failed to fetch tasks for user ${employeeIdForTasks}:`, error);
+    console.error(`Failed to fetch tasks for user ${employeeNameForTasks}:`, error);
     return [];
   }
 }
@@ -360,6 +363,113 @@ export async function fetchTodaysUserAttendance(employeeId: string): Promise<Att
     }
 }
 
+export async function handleAdminCreateManualAttendance(
+  prevState: ManualAttendanceEntryState,
+  formData: FormData
+): Promise<ManualAttendanceEntryState> {
+  const currentUser = await getCurrentAuthenticatedUser();
+  if (!currentUser || currentUser.role !== 'admin') {
+    return { message: "Unauthorized: Only admins can create manual attendance records.", errors: null, success: false };
+  }
+
+  const dateValue = formData.get("date");
+  const validatedFields = ManualAttendanceEntrySchema.safeParse({
+    employeeId: formData.get("employeeId"),
+    date: dateValue ? new Date(dateValue as string) : undefined,
+    checkInTime: formData.get("checkInTime"),
+    checkOutTime: formData.get("checkOutTime"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Validation failed. Please check the attendance details.",
+      success: false,
+    };
+  }
+
+  try {
+    const employee = await getEmployeeByIdFromStore(validatedFields.data.employeeId);
+    if (!employee) {
+      return { message: "Selected employee not found.", errors: { employeeId: ["Employee not found."] }, success: false };
+    }
+
+    const { date, checkInTime, checkOutTime } = validatedFields.data;
+    const recordDateStr = formatDateFns(date, "yyyy-MM-dd");
+
+    // Calculate total hours
+    const checkInDateTimeStr = `${recordDateStr} ${checkInTime}`;
+    const checkOutDateTimeStr = `${recordDateStr} ${checkOutTime}`;
+
+    // Helper to parse HH:MM AM/PM to a Date object for a given day
+    const parseTimeStringToDate = (timeStr: string, day: Date): Date => {
+        const [time, period] = timeStr.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        if (period.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+        if (period.toUpperCase() === 'AM' && hours === 12) hours = 0; // Midnight case
+        const d = new Date(day);
+        d.setHours(hours, minutes, 0, 0);
+        return d;
+    };
+
+    const checkInDateObj = parseTimeStringToDate(checkInTime, date);
+    const checkOutDateObj = parseTimeStringToDate(checkOutTime, date);
+    
+    let totalHoursStr: string | null = null;
+    if (!isNaN(checkInDateObj.getTime()) && !isNaN(checkOutDateObj.getTime()) && checkOutDateObj > checkInDateObj) {
+        let diffMs = checkOutDateObj.getTime() - checkInDateObj.getTime();
+        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        totalHoursStr = `${diffHrs}h ${diffMins}m`;
+    } else if (checkOutDateObj <= checkInDateObj) {
+         // This case should be caught by schema refinement, but double check
+         return { message: "Check-out time must be after check-in time.", errors: { checkOutTime: ["Check-out must be after check-in."] }, success: false };
+    } else {
+        totalHoursStr = "Error in calculation"; // Should not happen if times are valid
+    }
+
+    await addManualAttendanceRecordToStore({
+      employeeId: employee.id,
+      employeeName: employee.name,
+      date: recordDateStr,
+      checkIn: checkInTime,
+      checkOut: checkOutTime,
+      totalHours: totalHoursStr,
+    });
+
+    return {
+      message: `Attendance record for ${employee.name} on ${recordDateStr} added successfully!`,
+      errors: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to create manual attendance record:", error);
+    return {
+      message: (error as Error).message || "An error occurred.",
+      errors: { general: ["Server error, please try again."] },
+      success: false,
+    };
+  }
+}
+
+export async function handleAdminDeleteAttendanceRecord(recordId: string): Promise<{ success: boolean, message: string }> {
+    const currentUser = await getCurrentAuthenticatedUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+      return { success: false, message: "Unauthorized: Only admins can delete attendance records." };
+    }
+    try {
+        const success = await deleteAttendanceRecordFromStore(recordId);
+        if (success) {
+            return { success: true, message: "Attendance record deleted successfully." };
+        }
+        return { success: false, message: "Record not found or already deleted." };
+    } catch (error) {
+        console.error("Failed to delete attendance record:", error);
+        return { success: false, message: "An error occurred while deleting the record." };
+    }
+}
+
+
 // --- Finance Actions ---
 export async function fetchSalaryPayments(): Promise<SalaryPayment[]> {
     const currentUser = await getCurrentAuthenticatedUser();
@@ -383,11 +493,11 @@ export async function handleLogSalaryPayment(
   if (!currentUser || currentUser.role !== 'admin') {
     return { message: "Unauthorized: Only admins can log salary payments.", errors: null, success: false };
   }
-  const paymentDate = formData.get("paymentDate");
+  const paymentDateValue = formData.get("paymentDate");
   const validatedFields = LogSalaryPaymentSchema.safeParse({
     employeeId: formData.get("employeeId"),
     amount: formData.get("amount"),
-    paymentDate: paymentDate ? new Date(paymentDate as string) : undefined,
+    paymentDate: paymentDateValue ? new Date(paymentDateValue as string) : undefined,
     notes: formData.get("notes"),
   });
 
@@ -438,11 +548,11 @@ export async function handleRecordSalaryAdvance(
   if (!currentUser || currentUser.role !== 'admin') {
     return { message: "Unauthorized: Only admins can record salary advances.", errors: null, success: false };
   }
-  const advanceDate = formData.get("advanceDate");
+  const advanceDateValue = formData.get("advanceDate");
   const validatedFields = RecordSalaryAdvanceSchema.safeParse({
     employeeId: formData.get("employeeId"),
     amount: formData.get("amount"),
-    advanceDate: advanceDate ? new Date(advanceDate as string) : undefined,
+    advanceDate: advanceDateValue ? new Date(advanceDateValue as string) : undefined,
     reason: formData.get("reason"),
   });
 
@@ -472,15 +582,24 @@ export async function handleRecordSalaryAdvance(
 }
 
 
+// Helper to get the currently "logged in" user based on constants
 async function getCurrentAuthenticatedUser(): Promise<EmployeeProfile | null> {
+  // In a real app, this would involve session/token validation.
+  // For this demo, we rely on CURRENT_USER_DATA from constants.ts
+  // and ensure it's a valid employee from the store.
   if (CURRENT_USER_DATA && CURRENT_USER_DATA.id) {
     try {
       const userFromDb = await getEmployeeByIdFromStore(CURRENT_USER_DATA.id);
       if (userFromDb) {
-        return userFromDb;
+        // Ensure the role from DB is used if it's more up-to-date
+        return { ...CURRENT_USER_DATA, ...userFromDb };
       }
+      // If not in DB (e.g. initial seed admin not matching DB yet), return constant data
+      // This path should ideally not be hit frequently in a fully synced system.
       return CURRENT_USER_DATA; 
     } catch (e) {
+      // Fallback to constant data if DB fetch fails
+      console.error("Error fetching current user from DB, falling back to constants:", e);
       return CURRENT_USER_DATA; 
     }
   }
