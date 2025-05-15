@@ -17,16 +17,10 @@ import { Printer, LogInIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-// import { Separator } from "@/components/ui/separator"; // No longer needed
 import { useToast } from "@/hooks/use-toast";
 
-// Firebase imports - kept for potential future email/password auth with Firebase
-// import { GoogleAuthProvider, signInWithPopup, type User } from "firebase/auth"; // No longer needed for Google
-// import { auth } from "@/lib/firebase/client"; // Kept for general Firebase auth
-// import { processGoogleSignIn } from "@/lib/actions"; // No longer needed
-
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(""); // Changed from email
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isCredentialsLoading, setIsCredentialsLoading] = useState(false);
@@ -38,24 +32,25 @@ export default function LoginPage() {
     setError("");
     setIsCredentialsLoading(true);
 
-    if (!email || !password) {
-      setError("Please enter both email and password.");
+    if (!username || !password) {
+      setError("Please enter both username and password.");
       setIsCredentialsLoading(false);
       return;
     }
 
-    // console.log("Attempting login with:", { email, password });
-
     // Simulate API call for credentials login
     setTimeout(() => {
-      if (email === "admin@example.com" && password === "password") {
+      // Hardcoded admin credentials
+      if (username === "admin" && password === "admin@123") {
         toast({ title: "Login Successful", description: "Welcome back, Admin!" });
-        router.push("/dashboard");
-      } else if (email === "employee@example.com" && password === "password") {
+        // In a real app, you would set some session/token here
+        // And potentially fetch the actual admin user data
+        router.push("/dashboard"); // Redirect to dashboard
+      } else if (username === "employee" && password === "password") { // Kept employee for testing, adjust as needed
         toast({ title: "Login Successful", description: "Welcome back!" });
         router.push("/dashboard");
       } else {
-        setError("Invalid email or password. (Hint: admin@example.com or employee@example.com with password 'password')");
+        setError("Invalid username or password. (Hint: admin/admin@123 or employee/password)");
       }
       setIsCredentialsLoading(false);
     }, 1000);
@@ -76,13 +71,13 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6 p-6 sm:p-8">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="username">Username</Label> {/* Changed from email */}
               <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text" // Changed from email
+                placeholder="e.g., admin or your_username" // Updated placeholder
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="text-base"
               />
@@ -131,7 +126,6 @@ export default function LoginPage() {
 
             <p className="text-sm text-muted-foreground text-center mt-4">
               Need access? Contact administrator.
-              {/* Removed "Try Demo Access" as it might conflict with direct login focus */}
             </p>
           </CardFooter>
         </form>
@@ -139,3 +133,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
