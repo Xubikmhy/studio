@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 "use client";
 
@@ -59,14 +60,14 @@ export default function NewEmployeePage() {
       email: "",
       team: undefined, 
       roleInternal: "",
-      baseSalary: undefined, // Keep as undefined, input value handling will manage control state
+      baseSalary: undefined, 
     },
-    errors: state?.errors ? Object.entries(state.errors).reduce((acc, [key, value]) => {
-      if (value && value.length > 0) {
-        acc[key as keyof CreateEmployeeFormValues] = { type: 'manual', message: value.join(', ') };
-      }
-      return acc;
-    }, {} as any) : undefined, 
+    // errors: state?.errors ? Object.entries(state.errors).reduce((acc, [key, value]) => {
+    //   if (value && value.length > 0) {
+    //     acc[key as keyof CreateEmployeeFormValues] = { type: 'manual', message: value.join(', ') };
+    //   }
+    //   return acc;
+    // }, {} as any) : undefined, // Removed initial error setting from useForm, will be handled by useEffect
   });
 
   useEffect(() => {
@@ -80,6 +81,8 @@ export default function NewEmployeePage() {
         form.reset(); 
       }
     }
+    
+    form.clearErrors(); // Clear previous errors before setting new ones
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
         if (fieldErrors && fieldErrors.length > 0) {
@@ -89,11 +92,8 @@ export default function NewEmployeePage() {
           });
         }
       });
-    } else if (!state?.success) { 
-        form.clearErrors();
     }
-
-  }, [state, toast, form]);
+  }, [state, toast]); // Removed 'form' from dependencies
 
   return (
     <div className="space-y-6">
@@ -153,7 +153,7 @@ export default function NewEmployeePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Team</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a team" />
@@ -197,16 +197,10 @@ export default function NewEmployeePage() {
                       <Input
                         type="number"
                         placeholder="e.g., 50000"
-                        name={field.name}
-                        onBlur={field.onBlur}
-                        ref={field.ref}
-                        value={field.value ?? ''} // Ensure controlled: map undefined/null to empty string
+                        {...field} // Spread field props first
+                        value={field.value ?? ''} 
                         onChange={(event) => {
                           const value = event.target.value;
-                          // For react-hook-form state:
-                          // - Empty input becomes undefined (Zod coerce to NaN, then .positive() fails)
-                          // - Numeric string "123" becomes number 123
-                          // - Non-numeric string "abc" becomes NaN
                           field.onChange(value === '' ? undefined : +value);
                         }}
                       />

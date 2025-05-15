@@ -110,7 +110,7 @@ export default function EditEmployeePage({ params }: { params: { id: string } })
       setIsLoading(false);
     }
     loadEmployee();
-  }, [employeeId, form, toast]);
+  }, [employeeId, toast, form.reset]); // form.reset is stable, form itself is not
 
 
   useEffect(() => {
@@ -124,8 +124,8 @@ export default function EditEmployeePage({ params }: { params: { id: string } })
     if (state?.success) {
         router.push("/admin/employees");
     }
-    // Clear previous server errors and set new ones if they exist
-    form.clearErrors();
+    
+    form.clearErrors(); // Clear previous server errors
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
         if (fieldErrors && fieldErrors.length > 0) {
@@ -136,7 +136,7 @@ export default function EditEmployeePage({ params }: { params: { id: string } })
         }
       });
     }
-  }, [state, toast, form, router]);
+  }, [state, toast, router]); // Removed 'form' from dependencies
 
 
   if (isLoading) {
@@ -246,7 +246,7 @@ export default function EditEmployeePage({ params }: { params: { id: string } })
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Team</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a team" />

@@ -101,6 +101,7 @@ export default function NewSalaryAdvancePage() {
       form.reset();
       // router.push("/admin/finance"); 
     }
+    
     form.clearErrors();
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
@@ -112,7 +113,7 @@ export default function NewSalaryAdvancePage() {
         }
       });
     }
-  }, [state, toast, form, router]);
+  }, [state, toast, router]); // Removed 'form' from dependencies
 
   return (
     <div className="space-y-6">
@@ -143,7 +144,7 @@ export default function NewSalaryAdvancePage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Employee</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an employee" />
@@ -156,10 +157,10 @@ export default function NewSalaryAdvancePage() {
                           </SelectItem>
                         ))}
                         {isLoadingEmployees && (
-                           <SelectItem value="loading_placeholder" disabled>Loading employees...</SelectItem>
+                           <SelectItem value="loading_placeholder_sel" disabled>Loading employees...</SelectItem>
                          )}
                          {!isLoadingEmployees && employees.length === 0 && (
-                            <SelectItem value="no_employees_placeholder" disabled>No employees found</SelectItem>
+                            <SelectItem value="no_employees_placeholder_sel" disabled>No employees found</SelectItem>
                          )}
                       </SelectContent>
                     </Select>

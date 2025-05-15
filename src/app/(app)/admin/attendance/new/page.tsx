@@ -99,6 +99,7 @@ export default function AdminNewManualAttendancePage() {
       form.reset();
       // router.push("/attendance"); // Or refresh if needed
     }
+    
     form.clearErrors();
     if (state?.errors) {
       Object.entries(state.errors).forEach(([fieldName, fieldErrors]) => {
@@ -110,7 +111,7 @@ export default function AdminNewManualAttendancePage() {
         }
       });
     }
-  }, [state, toast, form, router]);
+  }, [state, toast, router]); // Removed 'form' from dependencies
 
   return (
     <div className="space-y-6">
@@ -141,7 +142,7 @@ export default function AdminNewManualAttendancePage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Employee</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an employee" />
@@ -154,10 +155,10 @@ export default function AdminNewManualAttendancePage() {
                           </SelectItem>
                         ))}
                         {isLoadingEmployees && (
-                           <SelectItem value="loading_placeholder" disabled>Loading employees...</SelectItem>
+                           <SelectItem value="loading_placeholder_sel" disabled>Loading employees...</SelectItem>
                          )}
                          {!isLoadingEmployees && employees.length === 0 && (
-                            <SelectItem value="no_employees_placeholder" disabled>No employees found</SelectItem>
+                            <SelectItem value="no_employees_placeholder_sel" disabled>No employees found</SelectItem>
                          )}
                       </SelectContent>
                     </Select>

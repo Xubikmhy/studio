@@ -104,7 +104,7 @@ export default function NewTaskPage() {
     }
 
     if (state?.success) {
-      form.reset({ // Reset with admin-specific defaults if admin
+      form.reset({ 
         taskName: "",
         description: "",
         team: isAdmin ? undefined : CURRENT_USER_DATA.team,
@@ -125,7 +125,7 @@ export default function NewTaskPage() {
         }
       });
     }
-  }, [state, toast, form, isAdmin]);
+  }, [state, toast, isAdmin]); // Removed 'form' from dependencies, isAdmin is kept because form.reset depends on it.
 
   return (
     <div className="space-y-6">
@@ -145,6 +145,7 @@ export default function NewTaskPage() {
       <Card className="shadow-lg hover:shadow-xl transition-shadow duration-200">
         <Form {...form}>
           <form action={formAction} className="space-y-0">
+            {/* CardHeader can be added here if desired */}
             <CardContent className="space-y-6 pt-6">
               <FormField
                 control={form.control}
@@ -216,15 +217,15 @@ export default function NewTaskPage() {
                     <FormItem>
                       <FormLabel>Assigned To</FormLabel>
                       {isAdmin ? (
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ""} defaultValue={field.value || ""}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select an employee" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {isLoadingEmployees && <SelectItem value="loading_placeholder" disabled>Loading employees...</SelectItem>}
-                            {!isLoadingEmployees && employeesForSelect.length === 0 && <SelectItem value="no_employees_placeholder" disabled>No employees found</SelectItem>}
+                            {isLoadingEmployees && <SelectItem value="loading_placeholder_sel" disabled>Loading employees...</SelectItem>}
+                            {!isLoadingEmployees && employeesForSelect.length === 0 && <SelectItem value="no_employees_placeholder_sel" disabled>No employees found</SelectItem>}
                             {employeesForSelect.map((employee) => (
                               <SelectItem key={employee.id} value={employee.name}>
                                 {employee.name} ({employee.team})
