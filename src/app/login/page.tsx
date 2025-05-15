@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { APP_NAME } from "@/lib/constants";
+import { APP_NAME, INITIAL_EMPLOYEES } from "@/lib/constants"; // Added INITIAL_EMPLOYEES
 import { Printer, LogInIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState(""); // Changed from email
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isCredentialsLoading, setIsCredentialsLoading] = useState(false);
@@ -40,17 +40,34 @@ export default function LoginPage() {
 
     // Simulate API call for credentials login
     setTimeout(() => {
-      // Hardcoded admin credentials
-      if (username === "admin" && password === "admin@123") {
-        toast({ title: "Login Successful", description: "Welcome back, Admin!" });
+      // Admin Check
+      if (username.toLowerCase() === "admin" && password === "admin@123") {
+        toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
         // In a real app, you would set some session/token here
-        // And potentially fetch the actual admin user data
-        router.push("/dashboard"); // Redirect to dashboard
-      } else if (username === "employee" && password === "password") { // Kept employee for testing, adjust as needed
-        toast({ title: "Login Successful", description: "Welcome back!" });
+        // And update CURRENT_USER_DATA or use a context/store for the logged-in user.
+        // For this demo, we assume CURRENT_USER_DATA is set to admin for admin features to work.
         router.push("/dashboard");
       } else {
-        setError("Invalid username or password. (Hint: admin/admin@123 or employee/password)");
+        // Employee Check
+        let employeeLoggedIn = false;
+        for (const employee of INITIAL_EMPLOYEES) {
+          const firstName = employee.name.split(" ")[0].toLowerCase();
+          const expectedPassword = `${firstName}@123`;
+
+          if (username.toLowerCase() === firstName && password === expectedPassword) {
+            toast({ title: "Login Successful", description: `Welcome back, ${employee.name}!` });
+            // IMPORTANT: This simulation does NOT change CURRENT_USER_DATA dynamically.
+            // The application will still behave based on the hardcoded CURRENT_USER_DATA in constants.ts.
+            // A real app would set a session indicating this user is logged in.
+            router.push("/dashboard");
+            employeeLoggedIn = true;
+            break;
+          }
+        }
+
+        if (!employeeLoggedIn) {
+          setError("Invalid username or password. (Admin: admin/admin@123 or Employee: firstName/firstName@123)");
+        }
       }
       setIsCredentialsLoading(false);
     }, 1000);
@@ -65,17 +82,17 @@ export default function LoginPage() {
             <CardTitle className="text-4xl font-bold tracking-tight text-foreground">{APP_NAME}</CardTitle>
           </div>
           <CardDescription className="text-muted-foreground text-base">
-            Access your {APP_NAME} employee portal.
+            Access your {APP_NAME} portal.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6 p-6 sm:p-8">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label> {/* Changed from email */}
+              <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
-                type="text" // Changed from email
-                placeholder="e.g., admin or your_username" // Updated placeholder
+                type="text"
+                placeholder="admin OR employee_firstname"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -123,7 +140,9 @@ export default function LoginPage() {
                 </>
               )}
             </Button>
-
+            <p className="text-xs text-muted-foreground text-center mt-2 px-4">
+              (Demo login: admin/admin@123 or for employees, use their first name as username and firstname@123 as password e.g., alice/alice@123)
+            </p>
             <p className="text-sm text-muted-foreground text-center mt-4">
               Need access? Contact administrator.
             </p>
@@ -133,4 +152,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
